@@ -40,6 +40,7 @@ jobs:
       run: |
         set -euo pipefail
         checksum_file=$(echo "$ARTIFACTS" | jq -r '.[] | select (.type=="Checksum") | .path')
+        echo "$checksum_file"
         echo "::set-output name=hashes::$(cat $checksum_file | base64 -w0)"
 
   provenance:
