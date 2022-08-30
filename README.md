@@ -1,66 +1,138 @@
 containerdbg
 ============
 
-TBD
+Introduction
+=============
 
-Compiling Requirments
-=====================
+containerdbg is an all-in-one command-line tool to help debug Kubernetes
+containers with common issues that arouse when moving to containers as part of
+legacy application modernization.
 
-libbpf-dev
-ko
+The tools works by first deploying a workload (either from a YAML file or a
+container image) - it can also connect to an existing deployment.
 
-Technical details
-=================
+Then it utilizes eBPF and a sidecar to instrument the workload while running -
+so you can try and use the workload as usual.
 
-BPF CO-RE (Compile Once – Run Everywhere)
------------------------------------------
+When you are done you finish the analyze stage and the tool collects the
+recorded data - and analyzes it displaying a report with issues found.
 
-Libbpf supports building BPF CO-RE-enabled applications, which, in contrast to
-[BCC](https://github.com/iovisor/bcc/), do not require Clang/LLVM runtime
-being deployed to target servers and doesn't rely on kernel-devel headers
-being available.
+Currently the tool looks for the following common issues:
 
-It does rely on kernel to be built with [BTF type
-information](https://www.kernel.org/doc/html/latest/bpf/btf.html), though.
-Some major Linux distributions come with kernel BTF already built in:
-  - Fedora 31+
-  - RHEL 8.2+
-  - OpenSUSE Tumbleweed (in the next release, as of 2020-06-04)
-  - Arch Linux (from kernel 5.7.1.arch1-1)
-  - Manjaro (from kernel 5.4 if compiled after 2021-06-18)
-  - Ubuntu 20.10
-  - Debian 11 (amd64/arm64)
+* Files missing in the container image - by tracking failed open-file requests
+  the tool can find files that weren't added to the container image (either at
+  build-time or via mount). There is also special logic to specifically handle
+  missing library support files (`*.so`, `*.py`, `*.rb`) 
 
-If your kernel doesn't come with BTF built-in, you'll need to build custom
-kernel. You'll need:
-  - `pahole` 1.16+ tool (part of `dwarves` package), which performs DWARF to
-    BTF conversion;
-  - kernel built with `CONFIG_DEBUG_INFO_BTF=y` option;
-  - you can check if your kernel has BTF built-in by looking for
-    `/sys/kernel/btf/vmlinux` file:
+* `EX_DEV` move failures - many legacy applications rely on a `move` or `rename` operation to be atomic - 
+   but when moving files that were originally part of the base image - the
+   overlay filesystem that supports containers needs to perform a copy and
+   delete operation - this can cause strange hard to debug errors
 
-vmlinux.h generation
--------------------
+* Failed network connections - sometimes a legacy application depends on a
+  network service which is not available in the Kubernetes deployment - and not
+  always is this easy to recognize - any failed network connection will be
+  logged. The tool also recongizes failed DNS queries - which sometimes mean the
+  network service is available but under a different name or undiscoverable by
+  the workload.
 
-vmlinux.h contains all kernel types, both exported and internal-only. BPF
-CO-RE-based applications are expected to include this file in their BPF
-program C source code to avoid dependency on kernel headers package.
+* Static IP address usage - although this is not recommended - some legacy
+  applications have configurations with static IP addresses which will definitly
+  not work with a Kuberenetes based deployment. The tool uses the DNS and IP
+  tracking - and if it finds a request to a network resource that wasn't
+  initiated based on a DNS request it will warn you to update your
+  configuration.
 
-For more reproducible builds, vmlinux.h header file is pre-generated and
-checked in along the other sources. This is done to avoid dependency on
-specific user/build server's kernel configuration, because vmlinux.h
-generation depends on having a kernel with BTF type information built-in
-(which is enabled by `CONFIG_DEBUG_INFO_BTF=y` Kconfig option See below).
 
-vmlinux.h is generated from upstream Linux version at particular minor
-version tag. E.g., `vmlinux_505.h` is generated from v5.5 tag. Exact set of
-types available in compiled kernel depends on configuration used to compile
-it. To generate present vmlinux.h header, default configuration was used, with
-only extra `CONFIG_DEBUG_INFO_BTF=y` option enabled.
+Usage
+=====
+In this section we will show 2 main usage scenarios for containerdbg.
 
-Given different kernel version can have incompatible type definitions, it
-might be important to use vmlinux.h of a specific kernel version as a "base"
-version of header. To that extent, all vmlinux.h headers are versioned by
-appending <MAJOR><MINOR> suffix to a file name. There is always a symbolic
-link vmlinux.h, that points to whichever version is deemed to be default
-(usually, latest).
+Analyzing a deployment yaml
+---------------------------
+This is use case is for when you have a kubernetes yaml which contains a Deployment resource. If this deployment yaml contains more than one Deployment resource please consider splitting it for simplicity.
+
+1. the first stage is to run the following command `containerdbg debug -f <yaml file> -o record.pb`.
+this will apply all the resources in the yaml file and modify the deployment inside the yaml to by debugged by containerdbg.
+2. The output should look something like:
+
+```bash
+Installing containerdbg node daemon
+NAMESPACE   RESOURCE                                  ACTION        STATUS      RECONCILED  CONDITIONS                                AGE     MESSAGE
+            Namespace/containerdbg-system             Unchanged     Current                 <None>                                    4s      Resource is current
+containerd  DaemonSet/containerdbg-daemonset          Created       Current                 <None>                                    2s      All replicas scheduled as expected. Repl
+
+Press Ctrl-C to finish the debugging session and download the collected report
+```
+At this point, you can work with your deployment for a while until some errors occur. once you are done press Ctrl-C on the terminal in which you ran containerdbg to finish collecting information.
+
+3. Now you can take record.pb and try to get a summary for the issues discovered by running `containerdbg analyze -f record.pb` this will print a short summary of what could have went wrong during the execution of your container.
+```
+
+While executing the container the following files were missing:
+===============================================================
+/var/lib/dpkg/arch is missing
+/var/lib/dpkg/triggers/File is missing
+
+While executing the container the library type files were missing:
+==================================================================
+
+While executing the container the following files where attempted to be moved but failed to docker limitation:
+==============================================================================================================
+```
+
+Analyzing a container image
+---------------------------
+In case you don't have a kubernetes yaml and you simply want to test an image you could run the following command `containerdbg debug <image> -o record.pb`.
+As in the previous section the output should look like:
+
+```bash
+Installing containerdbg node daemon
+NAMESPACE   RESOURCE                                  ACTION        STATUS      RECONCILED  CONDITIONS                                AGE     MESSAGE
+            Namespace/containerdbg-system             Unchanged     Current                 <None>                                    4s      Resource is current
+containerd  DaemonSet/containerdbg-daemonset          Created       Current                 <None>                                    2s      All replicas scheduled as expected. Repl
+
+Press Ctrl-C to finish the debugging session and download the collected report
+```
+At this point, you can work with your deployment for a while until some errors occur. once you are done press Ctrl-C on the terminal in which you ran containerdbg to finish collecting information.
+
+Now you can take record.pb and try to get a summary for the issues discovered by running `containerdbg analyze -f record.pb` this will print a short summary of what could have went wrong during the execution of your container.
+```
+While executing the container the following files were missing:
+===============================================================
+/etc/group is missing
+/etc/passwd is missing
+/etc/selinux/config is missing
+/etc/selinux/contexts/lxc_contexts is missing
+/usr/lib/locale/locale-archive is missing
+/usr/local/openjdk-11/conf/jndi.properties is missing
+/usr/local/tomcat/work/Catalina/localhost/petclinic/SESSIONS.ser is missing
+/usr/share/containers/selinux/contexts is missing
+
+While executing the container the library type files were missing:
+==================================================================
+
+While executing the container the following files where attempted to be moved but failed to docker limitation:
+==============================================================================================================
+
+While executing the container the following connections failed:
+==============================================================================================================
+10.108.0.105:5432
+```
+
+In this example we can see some missing configration files that have no real importance to the application and a failed connection to a posgres DB which might be the reason the application is failing.
+
+Troubleshooting
+===============
+In case you see the following errors
+```
+program sys_enter_open: apply CO-RE relocations: no BTF found for kernel version <version>: not supported
+```
+
+It means your cluster does not have btf support, in order to resolve this issue you can download the corresponding btf file from https://github.com/aquasecurity/btfhub-archive/ with the matching `<version>` and then do the following:
+1. extract the downloaded file into `btf-install/` using `tar xf <filename>`
+2. copy the resulting .btf file into btf-install folder.
+3. run `export TARGET_REPO=<repo name>` where repo name is an image registry accesible to your cluster.
+4. run `make install-btf`
+
+The program should run succefully now.
