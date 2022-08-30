@@ -18,17 +18,15 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/build"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/imagehelpers"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/rand"
 )
 
 func CreateDebugDeploymentForImage(imagename string, namespace string) (*appsv1.Deployment, error) {
-	result, err := imagehelpers.GetImageEntryPoint(imagename)
-	if err != nil {
-		return nil, err
-	}
 	id := rand.RandStringRunes(10)
-	return &appsv1.Deployment{
+	resDep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "debug-container-",
 			Namespace:    namespace,
@@ -46,60 +44,15 @@ func CreateDebugDeploymentForImage(imagename string, namespace string) (*appsv1.
 					},
 				},
 				Spec: v1.PodSpec{
-					InitContainers: []v1.Container{
-						{
-							Name:            "copy-entrypoint",
-							Image:           "ko.local/entrypoint",
-							ImagePullPolicy: v1.PullIfNotPresent,
-							Command: []string{
-								"cp",
-								"/ko-app/entrypoint",
-								"/.containerdbg",
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									MountPath: "/.containerdbg/",
-									Name:      "shareddir",
-								},
-							},
-						},
-					},
 					Containers: []v1.Container{
 						{
 							Name:            "modified-pod",
 							Image:           imagename,
-							ImagePullPolicy: v1.PullIfNotPresent,
-							Command:         append([]string{"/.containerdbg/entrypoint"}, result...),
+							ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
 							Env: []v1.EnvVar{
 								{
 									Name:  "SHARED_DIRECTORY",
 									Value: "/var/run/containerdbg/daemon",
-								},
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									MountPath: "/.containerdbg/",
-									Name:      "shareddir",
-								},
-								{
-									MountPath: "/var/run/containerdbg/daemon/",
-									Name:      "socket-folder",
-								},
-							},
-						},
-					},
-					Volumes: []v1.Volume{
-						{
-							Name: "shareddir",
-							VolumeSource: v1.VolumeSource{
-								EmptyDir: &v1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "socket-folder",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/run/containerdbg/daemon",
 								},
 							},
 						},
@@ -108,10 +61,16 @@ func CreateDebugDeploymentForImage(imagename string, namespace string) (*appsv1.
 				},
 			},
 		},
-	}, nil
+	}
+
+	if err := ModifyPodSpec(&resDep.Spec.Template.Spec); err != nil {
+		return nil, err
+	}
+
+	return resDep, nil
 }
 
-func modifyContainer(container *v1.Container) error {
+func addSharedDirs(container *v1.Container) {
 	container.Env = append(container.Env,
 		v1.EnvVar{
 			Name:  "SHARED_DIRECTORY",
@@ -119,12 +78,19 @@ func modifyContainer(container *v1.Container) error {
 		})
 	container.VolumeMounts = append(container.VolumeMounts,
 		v1.VolumeMount{
-			MountPath: "/.containerdbg/",
-			Name:      "shareddir",
-		},
-		v1.VolumeMount{
 			MountPath: "/var/run/containerdbg/daemon/",
 			Name:      "socket-folder",
+		})
+
+}
+
+func modifyContainer(container *v1.Container) error {
+	addSharedDirs(container)
+
+	container.VolumeMounts = append(container.VolumeMounts,
+		v1.VolumeMount{
+			MountPath: "/.containerdbg/",
+			Name:      "shareddir",
 		})
 
 	if container.Command != nil {
@@ -140,11 +106,22 @@ func modifyContainer(container *v1.Container) error {
 	return nil
 }
 
-func modifyPodSpec(podspec *v1.PodSpec) error {
+func GetDnsProxyContainer() v1.EphemeralContainerCommon {
+	return v1.EphemeralContainerCommon{
+		Name:            "dnsproxy",
+		Image:           build.ImageRepo + "/dnsproxy",
+		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
+		SecurityContext: &v1.SecurityContext{
+			Privileged: pointer.Bool(true),
+		},
+	}
+}
+
+func ModifyPodSpec(podspec *v1.PodSpec) error {
 	podspec.InitContainers = append(podspec.InitContainers, v1.Container{
 		Name:            "copy-entrypoint",
-		Image:           "ko.local/entrypoint",
-		ImagePullPolicy: v1.PullIfNotPresent,
+		Image:           build.ImageRepo + "/entrypoint",
+		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
 		Command: []string{
 			"cp",
 			"/ko-app/entrypoint",
@@ -180,9 +157,9 @@ func modifyPodSpec(podspec *v1.PodSpec) error {
 		}
 	}
 
-	return nil
-}
+	dnsProxyContainer := v1.Container(GetDnsProxyContainer())
+	addSharedDirs(&dnsProxyContainer)
+	podspec.Containers = append(podspec.Containers, dnsProxyContainer)
 
-func MutateDeployment(dep *appsv1.Deployment) error {
-	return modifyPodSpec(&dep.Spec.Template.Spec)
+	return nil
 }

@@ -31,7 +31,10 @@ type AnalyzeOptions struct {
 func NewAnalyzeCmd(streams genericclioptions.IOStreams) *cobra.Command {
 	options := AnalyzeOptions{}
 	cmd := &cobra.Command{
-		Use: "analyze",
+		Use:   "analyze -f <file.pb> [-t filters]",
+		Short: "analyze the collected events and print a list of probable errors with deployment",
+		Long: "analyze takes as input a collected event file and lists probable errors, " +
+			"optionally can recieve a custom list of files to ignore",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var filters *analyze.Filters
 			if options.filtersFile != "" {
@@ -46,25 +49,71 @@ func NewAnalyzeCmd(streams genericclioptions.IOStreams) *cobra.Command {
 				}
 			}
 			sum, err := analyze.Analyze(options.collectionFilename, filters)
-			fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following files were missing:")
-			fmt.Fprintln(cmd.OutOrStdout(), "===============================================================")
-			for _, fname := range sum.MissingFiles {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s is missing\n", fname)
-			}
-			fmt.Fprintln(cmd.Parent().OutOrStdout())
 
-			fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the library type files were missing:")
-			fmt.Fprintln(cmd.OutOrStdout(), "==================================================================")
-			for _, fname := range sum.MissingLibs {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s is missing\n", fname)
-			}
+			for _, contsum := range sum.GetContainerSummaries() {
+				fmt.Fprintf(cmd.OutOrStdout(), "Findings for container %v\n", contsum.Source)
+				sum := contsum.GetSummary()
+				fmt.Fprintln(cmd.OutOrStdout(), "================================")
+				fmt.Fprintln(cmd.Parent().OutOrStdout())
 
-			fmt.Fprintln(cmd.Parent().OutOrStdout())
+				if len(sum.MissingFiles) > 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following files were missing:")
+					fmt.Fprintln(cmd.OutOrStdout(), "--------------------------------")
+					for _, fname := range sum.MissingFiles {
+						fmt.Fprintf(cmd.OutOrStdout(), "%s is missing\n", fname)
+					}
+					fmt.Fprintln(cmd.Parent().OutOrStdout())
+				}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following files where attempted to be moved but failed to docker limitation:")
-			fmt.Fprintln(cmd.OutOrStdout(), "==============================================================================================================")
-			for _, fname := range sum.ExdevFailures {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s is attempted to be renamed atomically and failes do to docker filesystem limitation\n", fname)
+				if len(sum.MissingLibraries) > 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the library type files were missing:")
+					fmt.Fprintln(cmd.OutOrStdout(), "---------------------------------")
+					for _, fname := range sum.MissingLibraries {
+						fmt.Fprintf(cmd.OutOrStdout(), "%s is missing\n", fname)
+					}
+					fmt.Fprintln(cmd.Parent().OutOrStdout())
+				}
+
+				if len(sum.MoveFailures) > 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following files where attempted to be moved but failed to docker limitation:")
+					fmt.Fprintln(cmd.OutOrStdout(), "-------------------------------------------------------")
+					for _, fname := range sum.MoveFailures {
+						fmt.Fprintf(cmd.OutOrStdout(), "%s is attempted to be renamed atomically and failes do to docker filesystem limitation\n", fname.Source)
+					}
+					fmt.Fprintln(cmd.Parent().OutOrStdout())
+				}
+
+				if len(sum.ConnectionFailures) > 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following connections failed:")
+					fmt.Fprintln(cmd.OutOrStdout(), "-------------------------------------------------------")
+					for _, conn := range sum.ConnectionFailures {
+						if conn.TargetFqdn != "" {
+							fmt.Fprintf(cmd.OutOrStdout(), "%s(%s):%d\n", conn.TargetFqdn, conn.TargetIp, conn.Port)
+						} else {
+							fmt.Fprintf(cmd.OutOrStdout(), "%s:%d\n", conn.TargetIp, conn.Port)
+						}
+					}
+					fmt.Fprintln(cmd.Parent().OutOrStdout())
+				}
+
+				if len(sum.DnsFailures) > 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following dns queries failed:")
+					fmt.Fprintln(cmd.OutOrStdout(), "-------------------------------------------------------")
+					for _, conn := range sum.DnsFailures {
+						fmt.Fprintf(cmd.OutOrStdout(), "%s\n", conn.Query)
+					}
+					fmt.Fprintln(cmd.Parent().OutOrStdout())
+				}
+
+				if len(sum.StaticIps) > 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "While executing the container the following static IPs were detected, consider replacing those with DNS names:")
+					fmt.Fprintln(cmd.OutOrStdout(), "-------------------------------------------------------")
+					for _, conn := range sum.StaticIps {
+						fmt.Fprintf(cmd.OutOrStdout(), "%s:%d\n", conn.TargetIp, conn.Port)
+					}
+					fmt.Fprintln(cmd.Parent().OutOrStdout())
+				}
+
 			}
 			return err
 		},

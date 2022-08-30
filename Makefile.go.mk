@@ -32,7 +32,7 @@ export GOPROXY ?= https://proxy.golang.org
 export GOSUMDB ?= sum.golang.org
 
 CLANG ?= clang-13
-CFLAGS := -O2 -g -Wall $(CFLAGS)
+CFLAGS := -O2 -g -Wall $(CFLAGS) -Werror
 
 # locations where artifacts are stored
 # cumulatively track the directories/files to delete after a clean
@@ -126,7 +126,7 @@ generate: export BPF_CFLAGS := $(CFLAGS)
 generate:
 	go generate ./...
 
-depend: $(all_proto_go) generate init buildinfo | $(OUTPUT_DIRS)
+depend: $(all_proto_go) generate init buildinfo deployment | $(OUTPUT_DIRS)
 
 DIRS_TO_CLEAN := $(OUTPUT_DIRS)
 

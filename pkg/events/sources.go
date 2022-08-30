@@ -28,24 +28,30 @@ var defaultEventSources = []api.EventsSource{
 }
 
 type EventsSourceManager struct {
+	log              logr.Logger
 	sources          []api.EventsSource
 	aggregateChannel chan *proto.Event
 }
 
-func NewEventSourceManager() *EventsSourceManager {
+func NewEventSourceManager(log logr.Logger) *EventsSourceManager {
 	return &EventsSourceManager{
+		log:              log,
 		sources:          defaultEventSources,
 		aggregateChannel: make(chan *proto.Event, 10),
 	}
 }
 
-func (mgr *EventsSourceManager) Load(log logr.Logger) error {
+func (mgr *EventsSourceManager) AddEventSource(source api.EventsSource) {
+	mgr.sources = append(mgr.sources, source)
+}
+
+func (mgr *EventsSourceManager) Load() error {
 	if err := ebpf.GetManagerInstance().Init(); err != nil {
 		return err
 	}
 	loadedSources := []api.EventsSource{}
 	for _, source := range mgr.sources {
-		if err := source.Load(log); err != nil {
+		if err := source.Load(mgr.log); err != nil {
 			unloadSources(loadedSources)
 			return err
 		}
@@ -72,8 +78,13 @@ func (mgr *EventsSourceManager) Unload() {
 	close(mgr.aggregateChannel)
 }
 
-func (mgr *EventsSourceManager) RegisterContainer(nsId uint32, id *proto.SourceId) {
-	ebpf.GetManagerInstance().RegisterContainer(nsId, id)
+func (mgr *EventsSourceManager) RegisterContainer(nsId uint32, id *proto.SourceId) error {
+	mgr.log.Info("Registering container", "namespace", nsId)
+	err := ebpf.GetManagerInstance().RegisterContainer(nsId, id)
+	if err != nil {
+		mgr.log.Error(err, "Failed registering container")
+	}
+	return err
 }
 
 func unloadSources(sources []api.EventsSource) {

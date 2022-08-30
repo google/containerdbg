@@ -1,0 +1,60 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic-tomcat
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petclinic-tomcat
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: petclinic-tomcat
+    spec:
+      containers:
+      - image: eu.gcr.io/eitane-test/tomcat-image:b6f7435-dirty@sha256:4a5fbc252097492c2842ad183d042ce9f75c36ba248ec75672d373fab76deee4
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+        name: tomcat
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  name: petclinic-tomcat
+  namespace: default
+spec:
+  ports:
+  - name: petclinic-tomcat
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: petclinic-tomcat
+  type: LoadBalancer
+status:
+  loadBalancer: {}

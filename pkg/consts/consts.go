@@ -19,3 +19,5 @@ const NodeDaemonSocketName = "node.sock"
 const ContainerdbgNamespace = "containerdbg-system"
 const ContainerdbgDaemonsetName = "containerdbg-daemonset"
 const ContainerdbgFieldManagerName = "containerdbg"
+const DaemonProxyEnv = "DAEMON_PROXY"
+const DaemonProxyPort = 2375

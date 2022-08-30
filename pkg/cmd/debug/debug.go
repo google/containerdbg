@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
@@ -33,6 +34,7 @@ import (
 )
 
 type debugOptions struct {
+	keepInstall    bool
 	outputFilename string
 	yamlFilename   string
 	imageName      string
@@ -41,6 +43,10 @@ type debugOptions struct {
 func (o *debugOptions) validate() error {
 	if o.imageName == "" && o.yamlFilename == "" {
 		return fmt.Errorf("either image name of filename must be provided")
+	}
+
+	if o.imageName != "" && o.yamlFilename != "" {
+		return fmt.Errorf("only one of a filename or an image name may be provided")
 	}
 
 	if o.outputFilename == "" {
@@ -53,12 +59,11 @@ func (o *debugOptions) validate() error {
 func NewDebugCmd(f cmdutil.Factory, streams genericclioptions.IOStreams, interruptCh <-chan os.Signal) *cobra.Command {
 	o := debugOptions{}
 	cmd := &cobra.Command{
-		Use:  "debug [image name]",
-		Args: cobra.MaximumNArgs(1),
+		Use:   "debug {-f yaml | -i imagespec}",
+		Short: "debug either using a yaml file or an image name",
+		Long: "debug will deploy either an image as a deployment or an existing yaml file - " +
+			"adding all of the neccassary options for debuging with containerdbg",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				o.imageName = args[0]
-			}
 			if err := o.validate(); err != nil {
 				return err
 			}
@@ -66,8 +71,10 @@ func NewDebugCmd(f cmdutil.Factory, streams genericclioptions.IOStreams, interru
 		},
 	}
 
+	cmd.Flags().BoolVarP(&o.keepInstall, "keep", "k", false, "if specified will not uninstall containerdbg from cluster")
 	cmd.Flags().StringVarP(&o.outputFilename, "output", "o", "", "the output filename to which we will save the events.json file")
-	cmd.Flags().StringVarP(&o.yamlFilename, "filename", "f", "", "A yaml describing a deployment containerdbg should debug. If provided image name is ignored.")
+	cmd.Flags().StringVarP(&o.yamlFilename, "filename", "f", "", "A yaml describing a deployment containerdbg should debug. Cannot be supplied if specifying an image")
+	cmd.Flags().StringVarP(&o.imageName, "image", "i", "", "An image path to deploy and debug. Cannot be supplied with a yaml file")
 
 	return cmd
 }
@@ -81,6 +88,7 @@ func deployFromImageName(ctx context.Context, f cmdutil.Factory, imagename, name
 	if err != nil {
 		return nil, fmt.Errorf("failed creating deployment for image %v", err)
 	}
+
 	created, err := clientset.AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create deployment %v", err)
@@ -108,13 +116,7 @@ func deployFromYaml(ctx context.Context, f cmdutil.Factory, yamlFilename string,
 		}
 		appliedObjs = append(appliedObjs, obj)
 		return nil
-	}, decoder.WithMutation(func(obj k8s.Object) error {
-		dep, ok := obj.(*appsv1.Deployment)
-		if !ok {
-			return nil
-		}
-		return debug.MutateDeployment(dep)
-	}))
+	}, decoder.WithMutation(mutatePodSpec))
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +128,23 @@ func deployFromYaml(ctx context.Context, f cmdutil.Factory, yamlFilename string,
 		}
 		return nil
 	}, nil
+}
+
+func mutatePodSpec(obj k8s.Object) error {
+	switch o := obj.(type) {
+	case *appsv1.Deployment:
+		return debug.ModifyPodSpec(&o.Spec.Template.Spec)
+	case *appsv1.ReplicaSet:
+		return debug.ModifyPodSpec(&o.Spec.Template.Spec)
+	case *appsv1.StatefulSet:
+		return debug.ModifyPodSpec(&o.Spec.Template.Spec)
+	case *appsv1.DaemonSet:
+		return debug.ModifyPodSpec(&o.Spec.Template.Spec)
+	case *v1.Pod:
+		return debug.ModifyPodSpec(&o.Spec)
+	default:
+		return nil
+	}
 }
 
 func (o *debugOptions) debugImage(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams, interruptCh <-chan os.Signal) error {
@@ -140,10 +159,21 @@ func (o *debugOptions) debugImage(ctx context.Context, f cmdutil.Factory, stream
 		return err
 	}
 
-	if err := install.EnsureInstallation(ctx, f, streams); err != nil {
+	interrupttedCtx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		<-interruptCh
+		cancel()
+	}()
+	wasInstalled, err := install.EnsureInstallation(interrupttedCtx, f, streams)
+	if err != nil {
 		return fmt.Errorf("failed to ensure installation of containerdbg system: %v", err)
 	}
-	defer install.Uninstall(ctx, f, streams)
+
+	// avoid uninstalling if it was installed independently of this command
+	if !o.keepInstall && !wasInstalled {
+		defer install.Uninstall(ctx, f, streams)
+	}
 
 	if o.yamlFilename == "" {
 		cleanup, err := deployFromImageName(ctx, f, o.imageName, namespace)
@@ -161,7 +191,7 @@ func (o *debugOptions) debugImage(ctx context.Context, f cmdutil.Factory, stream
 
 	fmt.Fprintf(streams.ErrOut, "Press Ctrl-C to finish the debugging session and download the collected report\n\n")
 
-	<-interruptCh
+	<-interrupttedCtx.Done()
 
 	if err := collect.CollectRecordedData(ctx, f, outFile); err != nil {
 		return fmt.Errorf("failed to collect data from system %v", err)

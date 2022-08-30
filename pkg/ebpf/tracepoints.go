@@ -37,7 +37,7 @@ type tracepoint struct {
 func (o *tracepointCollection) Load() error {
 
 	for _, tp := range o.Tracepoints {
-		linked, err := link.Tracepoint(tp.Group, tp.Name, tp.Program)
+		linked, err := link.Tracepoint(tp.Group, tp.Name, tp.Program, nil)
 		if err != nil {
 			if !tp.IgnoreNotExists || !errors.Is(err, os.ErrNotExist) {
 				o.Unload()

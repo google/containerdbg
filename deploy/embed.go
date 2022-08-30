@@ -21,7 +21,7 @@ import (
 	"path"
 )
 
-//go:embed *
+//go:embed rendered/*
 var Deployment embed.FS
 
 func expandToDir(rootdir string, toDir string) error {
@@ -56,5 +56,5 @@ func expandToDir(rootdir string, toDir string) error {
 }
 
 func ExpandToDir(toDir string) error {
-	return expandToDir(".", toDir)
+	return expandToDir("rendered", toDir)
 }

@@ -25,6 +25,8 @@ commFilter:
   - "Periodic Recove" # jboss periodic recovery
   - "Transaction Exp" # jboss transaction exporter
 fileRegexFilter:
+  - ^\/var\/lib\/apt\/lists\/.*
+  - ^\/var\/lib\/dpkg\/.*
   - ^\/proc.*
   - ^\/usr\/share\/locale.*
   - ^\/usr\/bin\/locale.*
@@ -44,11 +46,31 @@ fileRegexFilter:
   - .*\/.java.policy$
   - .*lib\/endorsed$
   - .*lib\/ext$
-  - \/etc\/timezone
+  - ^\/etc\/timezone$
+  - ^\/etc\/localtime$
+  - ^\/etc\/inputrc$
+  - ^\/etc\/services$
+  - ^\/etc\/wgetrc$
+  - ^\/etc\/apt\/auth.conf$
+  - ^\/etc\/gcrypt\/hwf.deny$
+  - ^\/etc\/ssl\/openssl.cnf$
+  - ^\/usr\/lib\/ssl\/cert.pem$
+  - \/.bash_history$
+  - \/.inputrc$
+  - \/.dpkg.cfg$
+  - \/.rnd$
   - .*\/.history$
   - .*\/\.?ldaprc$
   - .*\/\.?toprc$
   - .*\/\.?popt$
+  - ^\/etc\/group$
+  - ^\/etc\/passwd$
+  - ^\/etc\/selinux\/config$
+  - ^\/etc\/selinux\/contexts\/lxc_contexts$
+  - ^\/usr\/lib\/locale\/locale-archive$
+  - ^\/usr\/share\/containers\/selinux\/contexts$
+  - ^\/sys\/fs\/cgroup\/.*$
+  - ^$
 libraryExtensions:
   - .rb
   - .so

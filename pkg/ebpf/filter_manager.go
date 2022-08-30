@@ -15,22 +15,26 @@
 package ebpf
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"sync"
 
 	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/btf"
 	"github.com/cilium/ebpf/rlimit"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/linux"
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS pinnedmaps pinned_maps.c -- -I./headers
+//go:generate go run -mod=mod github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS pinnedmaps pinned_maps.c -- -I./headers
 //go:generate ../../hack/add_license.sh ./pinnedmaps_bpfeb.go
 //go:generate ../../hack/add_license.sh ./pinnedmaps_bpfel.go
 
 type filtersManager struct {
-	pinnedMaps pinnedmapsObjects
-	idMap      sync.Map
+	pinnedMaps  pinnedmapsObjects
+	idMap       sync.Map
+	kernelTypes *btf.Spec
 }
 
 var filtersMgr *filtersManager = nil
@@ -51,10 +55,39 @@ func (mgr *filtersManager) GetDefaultCollectionOptions() *ebpf.CollectionOptions
 		Maps: ebpf.MapOptions{
 			PinPath: mgr.PinnedMapsPath(),
 		},
+		Programs: ebpf.ProgramOptions{
+			KernelTypes: mgr.kernelTypes,
+		},
 	}
 }
 
+func loadKernelSpec() (*btf.Spec, error) {
+	if linux.IsFileExists("/sys/kernel/btf/vmlinux") {
+		// if this file exists we don't need to do anything
+		return nil, nil
+	}
+
+	uname, err := linux.Uname()
+	if err != nil {
+		return nil, err
+	}
+
+	btfFilename := fmt.Sprintf("/btf/vmlinux-%s", uname)
+
+	if !linux.IsFileExists(btfFilename) {
+		// if this file does not exist proceed normally and let the ebpf library to try and auto detect it
+		return nil, nil
+	}
+
+	return btf.LoadSpec(btfFilename)
+}
+
 func (mgr *filtersManager) Init() error {
+	spec, err := loadKernelSpec()
+	if err != nil {
+		return err
+	}
+	mgr.kernelTypes = spec
 	if err := rlimit.RemoveMemlock(); err != nil {
 		return err
 	}
@@ -64,7 +97,7 @@ func (mgr *filtersManager) Init() error {
 	if err := os.MkdirAll(mgr.PinnedMapsPath(), os.ModePerm); err != nil {
 		return err
 	}
-	err := loadPinnedmapsObjects(&mgr.pinnedMaps, &ebpf.CollectionOptions{
+	err = loadPinnedmapsObjects(&mgr.pinnedMaps, &ebpf.CollectionOptions{
 		Maps: ebpf.MapOptions{
 			PinPath: mgr.PinnedMapsPath(),
 		},

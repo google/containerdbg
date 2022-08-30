@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/cilium/ebpf/internal/unix"
 )
@@ -15,7 +14,13 @@ import (
 // logErr should be the error returned by the syscall that generated
 // the log. It is used to check for truncation of the output.
 func ErrorWithLog(err error, log []byte, logErr error) error {
-	logStr := strings.Trim(CString(log), "\t\r\n ")
+	// Convert verifier log C string by truncating it on the first 0 byte
+	// and trimming trailing whitespace before interpreting as a Go string.
+	if i := bytes.IndexByte(log, 0); i != -1 {
+		log = log[:i]
+	}
+	logStr := string(bytes.Trim(log, "\t\r\n "))
+
 	if errors.Is(logErr, unix.ENOSPC) {
 		logStr += " (truncated...)"
 	}
@@ -39,13 +44,4 @@ func (le *VerifierError) Error() string {
 	}
 
 	return fmt.Sprintf("%s: %s", le.cause, le.log)
-}
-
-// CString turns a NUL / zero terminated byte buffer into a string.
-func CString(in []byte) string {
-	inLen := bytes.IndexByte(in, 0)
-	if inLen == -1 {
-		return ""
-	}
-	return string(in[:inLen])
 }

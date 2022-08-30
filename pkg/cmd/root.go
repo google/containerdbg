@@ -21,22 +21,31 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/analyze"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/attach"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/collect"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/convert"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/debug"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/dump"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/install"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/uninstall"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd/version"
 )
 
 func NewRootCmd(f cmdutil.Factory, streams genericclioptions.IOStreams, interruptCh <-chan os.Signal) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "containerdbg SUBCOMMAND",
+		Use:          "containerdbg SUBCOMMAND",
+		SilenceUsage: true,
 	}
 
 	cmd.AddCommand(collect.NewCollectCmd(f, streams),
 		debug.NewDebugCmd(f, streams, interruptCh),
 		analyze.NewAnalyzeCmd(streams),
 		dump.NewDumpCmd(streams),
-		convert.NewConvertCmd(streams))
+		convert.NewConvertCmd(streams),
+		attach.NewAttachCmd(f, streams, interruptCh),
+		version.NewVersionCmd(),
+		uninstall.NewUninstallCmd(f, streams),
+		install.NewInstallCmd(f, streams, interruptCh))
 
 	return cmd
 }

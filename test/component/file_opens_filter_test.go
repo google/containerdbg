@@ -18,7 +18,6 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"runtime"
 	"syscall"
 	"testing"
 	"time"
@@ -31,6 +30,7 @@ import (
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/api"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/linux"
 	pb "velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"velostrata-internal.googlesource.com/containerdbg.git/test/support"
 )
 
 func runBinaryWithNewNSAndAttach(t *testing.T, path string, args []string, exitChan chan<- interface{}) {
@@ -49,7 +49,7 @@ func runBinaryWithNewNSAndAttach(t *testing.T, path string, args []string, exitC
 		t.Fatal("failed to run test binary", err)
 	}
 
-	netId, err := linux.GetNetNsId(cmd.Process.Pid)
+	netId, err := linux.GetNetNsId(int32(cmd.Process.Pid))
 	if err != nil {
 		t.Fatal("failed to get namespace of command", err)
 	}
@@ -75,93 +75,6 @@ func runBinaryWithNewNSAndAttach(t *testing.T, path string, args []string, exitC
 
 }
 
-func openEqual(actual, expected *pb.Event_SyscallEvent_Open) bool {
-	if actual.Open.GetPath() != expected.Open.GetPath() {
-		return false
-	}
-
-	return true
-}
-
-func renameEqual(actual, expected *pb.Event_SyscallEvent_Rename) bool {
-	if actual.Rename.GetOldname() != expected.Rename.GetOldname() {
-		return false
-	}
-	if actual.Rename.GetNewname() != expected.Rename.GetNewname() {
-		return false
-	}
-
-	return true
-}
-
-func linkEqual(actual, expected *pb.Event_SyscallEvent_Link) bool {
-	if actual.Link.GetOldname() != expected.Link.GetOldname() {
-		return false
-	}
-	if actual.Link.GetNewname() != expected.Link.GetNewname() {
-		return false
-	}
-
-	return true
-}
-
-func syscallEquality(actual, expected *pb.Event_Syscall) bool {
-	if actual.Syscall.GetComm() != expected.Syscall.GetComm() {
-		return false
-	}
-	if actual.Syscall.GetRetCode() != expected.Syscall.GetRetCode() {
-		return false
-	}
-
-	switch actual := actual.Syscall.GetSyscall().(type) {
-	case *pb.Event_SyscallEvent_Open:
-		expected, ok := expected.Syscall.GetSyscall().(*pb.Event_SyscallEvent_Open)
-		if !ok {
-			return false
-		}
-		return openEqual(actual, expected)
-	case *pb.Event_SyscallEvent_Rename:
-		expected, ok := expected.Syscall.GetSyscall().(*pb.Event_SyscallEvent_Rename)
-		if !ok {
-			return false
-		}
-		return renameEqual(actual, expected)
-	case *pb.Event_SyscallEvent_Link:
-		expected, ok := expected.Syscall.GetSyscall().(*pb.Event_SyscallEvent_Link)
-		if !ok {
-			return false
-		}
-		return linkEqual(actual, expected)
-	default:
-		return false
-	}
-}
-
-// Although we could use proto.Equal to check for protobuf equality
-// that function uses reflection and slows down the test validation hard enough that we are not reading from the channel fast enough to clean the ring buffer, thus we have to implement the equality check directly.
-func helperEqualProto(t *testing.T, actual, expected *pb.Event) bool {
-	t.Helper()
-	if actual.Source.GetType() != expected.Source.GetType() {
-		return false
-	}
-	if actual.Source.GetId() != expected.Source.GetId() {
-		return false
-	}
-	if !actual.Timestamp.AsTime().Equal(expected.Timestamp.AsTime()) {
-		return false
-	}
-	switch actual := actual.EventType.(type) {
-	case *pb.Event_Syscall:
-		expected, ok := expected.EventType.(*pb.Event_Syscall)
-		if !ok {
-			return false
-		}
-		return syscallEquality(actual, expected)
-	default:
-		return false
-	}
-}
-
 func helperWaitForEvent(t *testing.T, events <-chan *pb.Event, expectedEvent *pb.Event, timeout time.Duration, times int) int {
 	t.Helper()
 	count := 0
@@ -172,7 +85,7 @@ func helperWaitForEvent(t *testing.T, events <-chan *pb.Event, expectedEvent *pb
 				return count
 			}
 			event.Timestamp = timestamppb.New(time.Unix(0, 0))
-			if helperEqualProto(t, event, expectedEvent) {
+			if support.EqualProto(t, event, expectedEvent) {
 				count++
 				if count >= times {
 					return count
@@ -322,87 +235,6 @@ func TestOpenIsRecorded(t *testing.T) {
 			}
 
 			helperBinaryProduceEvent(t, &renameFilter, expectedObj, time.Second*20, 1, "../../out/linux_amd64/release/test-binary", []string{"/filethatdoesnotexist"})
-
-			return ctx
-		}).
-		Feature()
-
-	test.Test(t, fileFilterFeature)
-}
-
-func TestStress(t *testing.T) {
-	fileFilterFeature := features.New("ebpf filters stress").
-		WithLabel("type", "component").
-		Assess("open no event drops", func(ctx context.Context, t *testing.T, _ *envconf.Config) context.Context {
-			openFilesFilter := ebpf.OpenFilesFilter{}
-			if err := openFilesFilter.Load(testr.NewWithOptions(t, testr.Options{
-				Verbosity: 5,
-			})); err != nil {
-				t.Fatal("failed to load ebpf filter", err)
-			}
-			defer func() {
-				t.Logf("cleaning filter")
-				if err := openFilesFilter.Close(); err != nil {
-					t.Error("failed to remove ebpf filter", err)
-				}
-			}()
-
-			expectedObj := &pb.Event{
-				Timestamp: timestamppb.New(time.Unix(0, 0)),
-				Source:    &pb.SourceId{Type: "container", Id: "self"},
-				EventType: &pb.Event_Syscall{
-					Syscall: &pb.Event_SyscallEvent{
-						Comm:    "scale-binary",
-						RetCode: -2,
-						Syscall: &pb.Event_SyscallEvent_Open{
-							Open: &pb.Event_SyscallEvent_OpenSyscall{
-								Path: "/filethatdoesnotexist",
-							},
-						},
-					},
-				},
-			}
-
-			runtime.GC()
-
-			helperBinaryProduceEvent(t, &openFilesFilter, expectedObj, time.Minute*2, 1000000, "../../out/linux_amd64/release/scale-binary", []string{"open", "1000000", "/filethatdoesnotexist"})
-
-			return ctx
-		}).
-		Assess("rename no event drops", func(ctx context.Context, t *testing.T, _ *envconf.Config) context.Context {
-			renameFilesFilter := ebpf.RenameLinkFilter{}
-			if err := renameFilesFilter.Load(testr.NewWithOptions(t, testr.Options{
-				Verbosity: 5,
-			})); err != nil {
-				t.Fatal("failed to load ebpf filter", err)
-			}
-			defer func() {
-				t.Logf("cleaning filter")
-				if err := renameFilesFilter.Close(); err != nil {
-					t.Error("failed to remove ebpf filter", err)
-				}
-			}()
-
-			expectedObj := &pb.Event{
-				Timestamp: timestamppb.New(time.Unix(0, 0)),
-				Source:    &pb.SourceId{Type: "container", Id: "self"},
-				EventType: &pb.Event_Syscall{
-					Syscall: &pb.Event_SyscallEvent{
-						Comm:    "scale-binary",
-						RetCode: -2,
-						Syscall: &pb.Event_SyscallEvent_Rename{
-							Rename: &pb.Event_SyscallEvent_RenameSyscall{
-								Oldname: "/filethatdoesnotexist",
-								Newname: "/www",
-							},
-						},
-					},
-				},
-			}
-
-			runtime.GC()
-
-			helperBinaryProduceEvent(t, &renameFilesFilter, expectedObj, time.Minute*2, 1000000, "../../out/linux_amd64/release/scale-binary", []string{"rename", "1000000", "/filethatdoesnotexist"})
 
 			return ctx
 		}).
