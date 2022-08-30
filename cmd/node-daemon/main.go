@@ -32,6 +32,7 @@ import (
 	"google.golang.org/grpc/status"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/sources"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/logger"
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
@@ -163,7 +164,7 @@ func StartNodeDaemon(ctx context.Context, log logr.Logger, errgr *errgroup.Group
 		return fmt.Errorf("%s env was not provided", consts.SharedDirectoryEnv)
 	}
 
-	mgr := events.NewEventSourceManager(log)
+	mgr := sources.NewEventSourceManager(log)
 
 	dynamicSource := events.NewDynamicSource()
 	mgr.AddEventSource(dynamicSource)

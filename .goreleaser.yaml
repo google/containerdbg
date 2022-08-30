@@ -5,5 +5,3 @@ builds:
     - -extldflags -static -s -w
     env:
     - CGO_ENABLED=0
-    hooks:
-      pre: make pre
