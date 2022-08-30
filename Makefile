@@ -64,3 +64,4 @@ example: prepare-kind-cluster
 test: generate build-go-linux images test-images
 	go test -coverprofile $(COVERPROFILE) -coverpkg ./... ./... $(TEST_FLAGS)
 
+pre: deployment
