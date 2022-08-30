@@ -1,0 +1,74 @@
+# Copyright 2021 Google LLC All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: containerdbg-system
+---
+# https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: containerdbg-daemonset
+  namespace: containerdbg-system
+  labels:
+    app: containerdbg-daemonset
+spec:
+  selector:
+    matchLabels:
+      app: containerdbg-daemonset
+  template:
+    metadata:
+      labels:
+        app: containerdbg-daemonset
+    spec:
+      hostPID: true
+      containers:
+      - name: containerdbg-daemonset
+        image: ko.local/node-daemon # kpt-set: ${repo}/node-daemon:${tag}
+        imagePullPolicy: Never
+        env:
+        - name: SHARED_DIRECTORY
+          value: /var/run/containerdbg/daemon/
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+        - name: socket-folder
+          mountPath: /var/run/containerdbg/daemon/
+        - mountPath: /sys/kernel/debug/
+          name: kernel-debug-path
+        - mountPath: /sys/fs/bpf/
+          name: bpf-fs
+          mountPropagation: HostToContainer
+        - mountPath: /var/run/containerdbg/data/
+          name: storage
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: socket-folder
+        hostPath:
+          path: /var/run/containerdbg/daemon
+      - hostPath:
+          path: /sys/kernel/debug/
+          type: Directory
+        name: kernel-debug-path
+      - hostPath:
+          path: /sys/fs/bpf/
+          type: Directory
+        name: bpf-fs
+      - hostPath:
+          path: /var/run/containerdbg/data
+        name: storage

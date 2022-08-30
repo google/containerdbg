@@ -1,0 +1,53 @@
+# Copyright 2022 Google LLC All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Stateless application specification
+# The Deployment creates a single replicated Pod, indicated by the 'replicas' field
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: openfile-deployment
+  name: openfile-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openfile-deployment
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: openfile-deployment
+    spec:
+      containers:
+      - image: ko.local/test-openfile
+        imagePullPolicy: IfNotPresent
+        name: openfile-deployment
+
+---
+# Headless Service specification -
+# No load-balancing, and a single cluster internal IP, only reachable from within the cluster
+# The Kubernetes endpoints controller will modify the DNS configuration to return records (addresses) that point to the Pods, which are labeled with "app": "imglib-dxyhdrdzqp"
+apiVersion: v1
+kind: Service
+metadata:
+  name: openfile-service
+spec:
+  clusterIP: None
+  selector:
+    app: openfile-deployment
+  type: ClusterIP
+
+---

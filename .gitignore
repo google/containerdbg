@@ -1,0 +1,5 @@
+out/
+build/.buildinfo
+*.o
+*_bpfel.go
+*_bpfeb.go

@@ -1,0 +1,59 @@
+# Copyright 2022 Google LLC All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+commFilter:
+  - "udevadm"
+  - "nrpe"
+  - "snmp"
+  - "pidof"
+  - "snmpd"
+  - "sssd"
+  - "sshd"
+  - "klnagent"
+  - "MSC service thr" # MSC jboss thread
+  - "Periodic Recove" # jboss periodic recovery
+  - "Transaction Exp" # jboss transaction exporter
+fileRegexFilter:
+  - ^\/proc.*
+  - ^\/usr\/share\/locale.*
+  - ^\/usr\/bin\/locale.*
+  - ^\/usr\/bin\/locale.*
+  - .*\/__nria_localentity$
+  - ^\/run.*
+  - ^\/var\/lib\/rpm.*
+  - ^\/tmp\/.*
+  - ^\/etc\/pam.d\/.*
+  - .*\.gemspec$
+  - ^.*/gems\/.*\/plugins$
+  - ^.*/lib\/ruby\/.*\/plugins$
+  - ^\/dev\/(null|urandom|tty|mem)$
+  - .*\.pyc?$
+  - .*\.so(\.[0-9.]+)?$
+  - .*META-INF\/MANIFEST\.MF$
+  - .*\/.java.policy$
+  - .*lib\/endorsed$
+  - .*lib\/ext$
+  - \/etc\/timezone
+  - .*\/.history$
+  - .*\/\.?ldaprc$
+  - .*\/\.?toprc$
+  - .*\/\.?popt$
+libraryExtensions:
+  - .rb
+  - .so
+libEquivalents:
+  .rb:
+    - .so
+  .py:
+    - .so

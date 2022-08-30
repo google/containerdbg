@@ -1,0 +1,58 @@
+# Copyright 2021 Google LLC All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# https://kubernetes.io/docs/concepts/workloads/pods/
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "modified-pod"
+  namespace: default
+  labels:
+    app: "modified-pod"
+spec:
+  initContainers:
+  - name: copy-entrypoint
+    image: ko.local/entrypoint
+    imagePullPolicy: Never
+    command:
+    - "cp"
+    - "/ko-app/entrypoint"
+    - "/.containerdbg/"
+    volumeMounts:
+    - mountPath: /.containerdbg/
+      name: shareddir
+  containers:
+  - name: modified-pod
+    image: "ko.local/test-openfile"
+    imagePullPolicy: Never
+    command:
+      - "/.containerdbg/entrypoint"
+      - "/ko-app/test-openfile"
+      - "/doesnotexists"
+    env:
+    - name: SHARED_DIRECTORY
+      value: /var/run/containerdbg/daemon/
+    volumeMounts:
+    - mountPath: /.containerdbg/
+      name: shareddir
+    - name: socket-folder
+      mountPath: /var/run/containerdbg/daemon/
+  volumes:
+    - name: shareddir
+      emptyDir: {}
+    - name: socket-folder
+      hostPath:
+        path: /var/run/containerdbg/daemon
+  restartPolicy: Always
+
