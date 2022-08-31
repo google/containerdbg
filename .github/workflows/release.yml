@@ -73,6 +73,13 @@ jobs:
         fi
     - name: Download assets
       env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        gh -R "$GITHUB_REPOSITORY" release download "$GITHUB_REF_NAME" -p "*.tar.gz"
+        gh -R "$GITHUB_REPOSITORY" release download "$GITHUB_REF_NAME" -p "attestation.intoto.jsonl"
+    - name: Verify assets
+      env:
         CHECKSUMS: ${{ needs.goreleaser.outputs.hashes }}
         PROVENANCE: ${{ needs.provenance.outputs.attestation-name }}
       run: |
