@@ -17,11 +17,13 @@ jobs:
       with:
         version: 13
     - name: Set up libbpf
+      env:
+        SUDO: sudo
       run: |
         set -ex
         LIBBPF_VERSION=0.7.0
         
-        apt-get -y install libelf-dev
+        $SUDO apt-get -y install libelf-dev
         
         mkdir libbpf
         pushd libbpf
@@ -30,7 +32,7 @@ jobs:
         tar xf v${LIBBPF_VERSION}.tar.gz
         cd libbpf-${LIBBPF_VERSION}/src
         make
-        make install
+        $SUDO make install
         popd
         rm -rf libbpf
     - uses: supplypike/setup-bin@v1
