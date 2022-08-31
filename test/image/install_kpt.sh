@@ -16,7 +16,7 @@
 
 curl -L https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.17/kpt_linux_amd64 -o kpt
 
-mv kpt /usr/local/bin/
-chmod +x /usr/local/bin/kpt
+$SUDO mv kpt /usr/local/bin/
+$SUDO chmod +x /usr/local/bin/kpt
 
 

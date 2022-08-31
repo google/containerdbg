@@ -35,12 +35,10 @@ jobs:
         $SUDO make install
         popd
         rm -rf libbpf
-    - uses: supplypike/setup-bin@v1
-      name: Install kpt
-      with:
-        uri: 'https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.19/kpt_linux_amd64'
-        version: 'v1.0.0-beta.19'
-        name: 'kpt'
+    - name: Install kpt
+      run: ./test/image/install_kpt.sh
+      env:
+        SUDO: sudo
     - uses: giantswarm/install-binary-action@v1
       name: Install ko
       with:
