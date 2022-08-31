@@ -37,7 +37,7 @@ func TestMain(m *testing.M) {
 
 	testenv.Setup(
 		envfuncs.CreateKindCluster(kindClusterName),
-		// envfuncs.LoadDockerImageToCluster(kindClusterName, "eu.gcr.io/modernize-prow/tomcat-petclinic"),
+		envfuncs.LoadDockerImageToCluster(kindClusterName, "tomcat-petclinic"),
 		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/node-daemon"),
 		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/entrypoint"),
 		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/dnsproxy"),

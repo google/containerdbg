@@ -29,7 +29,7 @@ spec:
         app: petclinic-tomcat
     spec:
       containers:
-      - image: eu.gcr.io/modernize-prow/tomcat-petclinic
+      - image: tomcat-petclinic
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:

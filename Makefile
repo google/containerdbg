@@ -42,6 +42,7 @@ images: node-daemon containerdbg-entrypoint dnsproxy
 
 .PHONY: test-tomcat
 test-tomcat:
+	cd examples/petclinic/tomcat/; docker build . -t tomcat-petclinic
 	#docker pull eu.gcr.io/modernize-prow/tomcat-petclinic
 
 .PHONY: test-images
