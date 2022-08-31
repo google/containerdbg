@@ -41,13 +41,12 @@ jobs:
         uri: 'https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.19/kpt_linux_amd64'
         version: 'v1.0.0-beta.19'
         name: 'kpt'
-    - uses: jaxxstorm/action-install-gh-release@v1.5.0
+    - uses: giantswarm/install-binary-action@v1
       name: Install ko
       with:
-        repo: google/ko
-        tag: v0.12.0
-        platform: Linux
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        binary: "ko"
+        version: "0.12.0"
+        download_url: "https://github.com/google/ko/releases/download/v0.12.0/ko_0.12.0_Linux_x86_64.tar.gz"
+        tarball_binary_path: "*/ko"
     - name: test
       run: make test
