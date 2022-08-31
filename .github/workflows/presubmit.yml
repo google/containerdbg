@@ -52,4 +52,4 @@ jobs:
         skipClusterCreation: "true"
     - name: test
       run: |
-        sudo env "PATH=$PATH" make test || sudo dmesg
+        sudo env "PATH=$PATH" make test

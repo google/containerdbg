@@ -113,6 +113,8 @@ func GetDnsProxyContainer() v1.EphemeralContainerCommon {
 		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
 		SecurityContext: &v1.SecurityContext{
 			Privileged: pointer.Bool(true),
+			RunAsUser:  pointer.Int64(0),
+			RunAsGroup: pointer.Int64(0),
 		},
 	}
 }
