@@ -49,5 +49,8 @@ jobs:
     - uses: engineerd/setup-kind@v0.5.0
       with:
         version: v0.13.0
+        skipClusterCreation: "true"
     - name: test
-      run: sudo env "PATH=$PATH" make test
+      run: |
+        sudo env "PATH=$PATH" make test
+        sudo dmesg
