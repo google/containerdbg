@@ -46,7 +46,7 @@ jobs:
         version: "0.12.0"
         download_url: "https://github.com/google/ko/releases/download/v0.12.0/ko_0.12.0_Linux_x86_64.tar.gz"
         tarball_binary_path: "ko"
-    - uses: engineerd/setup-kind@v0.1.0
+    - uses: engineerd/setup-kind@v0.5.0
       with:
         version: v0.13.0
     - name: test
