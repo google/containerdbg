@@ -20,13 +20,14 @@ import (
 	"google.golang.org/grpc/peer"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/ebpf"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/sources"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/linux"
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
 
 type NodeDaemonServiceServer struct {
 	proto.UnimplementedNodeDaemonServiceServer
-	Manager *events.EventsSourceManager
+	Manager *sources.EventsSourceManager
 	events.DynamicSource
 }
 
