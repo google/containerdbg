@@ -5,3 +5,9 @@ builds:
     - -extldflags -static -s -w
     env:
     - CGO_ENABLED=0
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs[(\\w)]*:+.*$'
+    - '^test[(\\w)]*:+.*$'
