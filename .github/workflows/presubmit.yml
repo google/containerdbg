@@ -4,6 +4,8 @@ name: Regression tests
 on:
   pull_request:
     types: [opened, edited, synchronize]
+    paths-ignore:
+    - '*.md'
   push:
     branches:
     - 'main'
