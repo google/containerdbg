@@ -24,6 +24,6 @@ wget https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.g
 tar xf v${LIBBPF_VERSION}.tar.gz
 cd libbpf-${LIBBPF_VERSION}/src
 make
-make install
+$SUDO make install
 popd
 rm -rf libbpf
