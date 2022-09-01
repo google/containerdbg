@@ -48,6 +48,8 @@ Usage
 =====
 In this section we will show 2 main usage scenarios for containerdbg.
 
+For a step-by-step guide with example application please refer to the [guide](examples/petclinic/).
+
 Analyzing a deployment yaml
 ---------------------------
 This is use case is for when you have a kubernetes yaml which contains a Deployment resource. If this deployment yaml contains more than one Deployment resource please consider splitting it for simplicity.
