@@ -27,7 +27,7 @@ import (
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS renamelink renamelink_filter.c -- -I./headers
+//go:generate go run -mod=mod github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS renamelink renamelink_filter.c -- -I./headers
 //go:generate ../../hack/add_license.sh ./renamelink_bpfeb.go
 //go:generate ../../hack/add_license.sh ./renamelink_bpfel.go
 

@@ -1,0 +1,58 @@
+on:
+  pull_request_review:
+    types: [submitted]
+  push:
+    branches:
+    - 'main'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request_review' || github.event.review.state == 'approved'
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+        check-latest: true
+    - name: Set up clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: 13
+    - name: Set up libbpf
+      env:
+        SUDO: sudo
+      run: |
+        set -ex
+        LIBBPF_VERSION=0.7.0
+        
+        $SUDO apt-get -y install libelf-dev
+        
+        mkdir libbpf
+        pushd libbpf
+        
+        wget https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.gz
+        tar xf v${LIBBPF_VERSION}.tar.gz
+        cd libbpf-${LIBBPF_VERSION}/src
+        make
+        $SUDO make install
+        popd
+        rm -rf libbpf
+    - name: Install kpt
+      run: ./test/image/install_kpt.sh
+      env:
+        SUDO: sudo
+    - uses: giantswarm/install-binary-action@v1
+      name: Install ko
+      with:
+        binary: "ko"
+        version: "0.12.0"
+        download_url: "https://github.com/google/ko/releases/download/v0.12.0/ko_0.12.0_Linux_x86_64.tar.gz"
+        tarball_binary_path: "ko"
+    - uses: engineerd/setup-kind@v0.5.0
+      with:
+        version: v0.13.0
+        skipClusterCreation: "true"
+    - name: test
+      run: |
+        sudo env "PATH=$PATH" make test

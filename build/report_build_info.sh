@@ -17,3 +17,7 @@ git_rev=${GIT_REV:-$(git rev-parse --short HEAD)}
 
 # used by hack/gobuild.sh
 echo "main.vendorVersion=${GIT_REV}"
+echo "velostrata-internal.googlesource.com/containerdbg.git/pkg/build.ImageRepo=${TARGET_REPO}"
+echo "velostrata-internal.googlesource.com/containerdbg.git/pkg/build.PullPolicy=${IMAGE_PULL_POLICY}"
+echo "velostrata-internal.googlesource.com/containerdbg.git/pkg/build.Version=${BUILD_VERSION:-$git_rev}"
+echo "velostrata-internal.googlesource.com/containerdbg.git/pkg/build.GitSha=${BUILD_VERSION:-$git_rev}"

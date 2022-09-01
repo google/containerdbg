@@ -1,0 +1,1 @@
+{"builds":[{"imageName":"tomcat-image","tag":"eu.gcr.io/eitane-test/tomcat-image:b6f7435-dirty@sha256:4a5fbc252097492c2842ad183d042ce9f75c36ba248ec75672d373fab76deee4"}]}

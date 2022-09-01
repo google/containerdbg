@@ -8,6 +8,7 @@ node_daemon_proto = \
 
 events_proto = \
 	proto/event.proto \
+	proto/summary.proto \
 	$(NULL)
 
 gen_protobuf_go = \
@@ -32,10 +33,10 @@ PROTOC_GEN_GO:=$(if $(PROTOC_GEN_GO),$(PROTOC_GEN_GO),$(TOOLS_DIR)/protoc-gen-go
 PROTOC_GEN_GO_GRPC:=$(if $(PROTOC_GEN_GO_GRPC),$(PROTOC_GEN_GO_GRPC),$(TOOLS_DIR)/protoc-gen-go-grpc)
 
 $(PROTOC_GEN_GO):
-	env "GOBIN=$(TOOLS_DIR)" go install google.golang.org/protobuf/cmd/protoc-gen-go
+	env "GOBIN=$(TOOLS_DIR)" go install -mod=mod google.golang.org/protobuf/cmd/protoc-gen-go
 
 $(PROTOC_GEN_GO_GRPC):
-	env "GOBIN=$(TOOLS_DIR)" go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
+	env "GOBIN=$(TOOLS_DIR)" go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
 
 $(proto_go_grpc_artifacts): %_grpc.pb.go: %.proto | $(PROTOC) $(PROTOC_GEN_GO_GRPC)
 	$(PROTOC) \

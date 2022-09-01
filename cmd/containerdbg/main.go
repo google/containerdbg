@@ -44,6 +44,6 @@ func main() {
 	kubeConfigFlags.AddFlags(root.PersistentFlags())
 
 	if err := root.ExecuteContext(context.Background()); err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 }

@@ -17,6 +17,14 @@ option go_package = "velostrata-internal.googlesource.com/containerdbg.git/proto
 
 import "google/protobuf/timestamp.proto";
 
+message DnsQueryError {
+  enum ErrorCode {
+      OK = 0;
+      UNKNOWN = 1;
+  }
+  ErrorCode code = 1;
+}
+
 message SourceId {
   string type = 1;
   string id = 2;
@@ -48,7 +56,10 @@ message Event {
   }
   message NetworkEvent {
     enum NetworkEventType {
-      LISTEN = 0;
+      UNUSED = 0; // As default protobuf text doesn't print 0s - should fix this
+      LISTEN = 1;
+      FAILED_CONNECTION = 2;
+      INITIATE_CONNECTION = 3;
     }
     string comm = 1;
     NetworkEventType event_type = 2;
@@ -58,8 +69,21 @@ message Event {
     int32 src_port = 6;
     int32 dst_port = 7;
   }
+  message DnsQueryEvent {
+    string query = 1;
+
+    oneof answer {
+       string ip = 2;
+       DnsQueryError error = 3;
+    }
+  }
+  message DnsSearchParametersProbe {
+    repeated string search = 1;
+  }
   oneof event_type {
       SyscallEvent syscall = 3;
       NetworkEvent network = 4;
+      DnsQueryEvent dns_query = 5;
+      DnsSearchParametersProbe dns_search = 6;
   }
 }

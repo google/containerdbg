@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/cli-utils/pkg/common"
 	"sigs.k8s.io/cli-utils/pkg/inventory"
 	"sigs.k8s.io/cli-utils/pkg/kstatus/polling"
-	"sigs.k8s.io/cli-utils/pkg/printers"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/printers/table"
 )
 
 func InstallRG(ctx context.Context, f cmdutil.Factory) error {
@@ -79,8 +79,12 @@ func LoadPackage(ctx context.Context, f cmdutil.Factory, path string) (*KptPacka
 	return result, nil
 }
 
-func (pkg *KptPackage) Install(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams, fieldmanager string) error {
+func (pkg *KptPackage) Install(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams, fieldmanager string) (bool, error) {
 	fmt.Fprintf(streams.Out, "Installing containerdbg node daemon\n")
+	clientset, err := f.KubernetesClientSet()
+	if err != nil {
+		return false, err
+	}
 	applier, err := apply.NewApplierBuilder().
 		WithFactory(f).
 		WithInventoryClient(pkg.invClient).
@@ -88,7 +92,7 @@ func (pkg *KptPackage) Install(ctx context.Context, f cmdutil.Factory, streams g
 		Build()
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	ch := applier.Run(ctx, pkg.invInfo, pkg.objs, apply.ApplierOptions{
@@ -105,12 +109,16 @@ func (pkg *KptPackage) Install(ctx context.Context, f cmdutil.Factory, streams g
 		InventoryPolicy:        inventory.PolicyAdoptIfNoInventory,
 	})
 
-	printer := printers.GetPrinter(printers.TablePrinter, streams)
+	printer := table.Printer{IOStreams: streams, PodsClient: clientset.CoreV1()}
 	return printer.Print(ch, common.DryRunNone, true)
 }
 
 func (pkg *KptPackage) Uninstall(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams) error {
 	fmt.Fprintf(streams.Out, "Uninstalling containerdbg node daemon\n")
+	clientset, err := f.KubernetesClientSet()
+	if err != nil {
+		return err
+	}
 	destroyer, err := apply.NewDestroyer(f, pkg.invClient)
 	if err != nil {
 		return err
@@ -125,6 +133,8 @@ func (pkg *KptPackage) Uninstall(ctx context.Context, f cmdutil.Factory, streams
 
 	ch := destroyer.Run(ctx, pkg.invInfo, options)
 
-	printer := printers.GetPrinter(printers.TablePrinter, streams)
-	return printer.Print(ch, common.DryRunNone, true)
+	// printer := printers.GetPrinter(printers.TablePrinter, streams)
+	printer := table.Printer{IOStreams: streams, PodsClient: clientset.CoreV1()}
+	_, err = printer.Print(ch, common.DryRunNone, true)
+	return err
 }

@@ -29,6 +29,7 @@ func NewDumpCmd(streams genericclioptions.IOStreams) *cobra.Command {
 		Use:    "dump",
 		Hidden: true,
 		Short:  "dumps collected information file in textual format",
+		Long:   "converts the containerdbg protobuf format to textual format",
 		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			f, err := os.Open(args[0])

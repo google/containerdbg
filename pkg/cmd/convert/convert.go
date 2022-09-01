@@ -28,8 +28,9 @@ import (
 func NewConvertCmd(streams genericclioptions.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "convert <input> <output>",
+		Short:  "convert converts a binary event file to a text file",
+		Long:   "convert converts a binary event file to a text file - for custom parsing",
 		Hidden: true,
-		Short:  "convert textual record file to binary format",
 		Args:   cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			f, err := os.Open(args[0])

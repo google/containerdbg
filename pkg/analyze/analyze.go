@@ -15,78 +15,17 @@
 package analyze
 
 import (
+	"errors"
+	"io"
 	"os"
-	"path/filepath"
 	"sort"
+	"strings"
 
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
 
-type AnalyzeSummary struct {
-	MissingFiles  []string
-	ExdevFailures []string
-	MissingLibs   []string
-}
-
-func filterOpen(filters *Filters, event *proto.Event, missingFiles map[string]any, libAnalyzer *libraryAnalyzer) bool {
-	syscall := event.GetSyscall()
-	if syscall == nil {
-		return true
-	}
-
-	openSyscall := syscall.GetOpen()
-	if openSyscall == nil {
-		return true
-	}
-
-	if syscall.GetRetCode() >= 0 {
-		libAnalyzer.handleFoundFile(openSyscall.GetPath())
-		return false
-	}
-
-	if _, ok := filters.CommFilter[syscall.GetComm()]; ok {
-		return false
-	}
-
-	for _, re := range filters.FileRegexFilter {
-		if re.MatchString(openSyscall.GetPath()) {
-			return false
-		}
-	}
-
-	missingFiles[openSyscall.GetPath()] = nil
-
-	return true
-}
-
-func filterExdev(event *proto.Event, failedRenames map[string]any) bool {
-	syscall := event.GetSyscall()
-	if syscall == nil {
-		return true
-	}
-
-	renameSyscall := syscall.GetRename()
-	if renameSyscall == nil {
-		return true
-	}
-
-	if syscall.GetRetCode() != -18 {
-		return false
-	}
-
-	if filepath.Dir(renameSyscall.Oldname) == filepath.Dir(renameSyscall.Newname) {
-		failedRenames[renameSyscall.Oldname] = nil
-		return false
-	}
-
-	return true
-}
-
-func Analyze(inputFilename string, filters *Filters) (*AnalyzeSummary, error) {
-	if filters == nil {
-		filters = defaultFilters
-	}
+func analyzeContainer(inputFilename string, sourceId *proto.SourceId, searchPath []string, filters *Filters) (*proto.ContainerAnalysisSummary, error) {
 	f, err := os.Open(inputFilename)
 	if err != nil {
 		return nil, err
@@ -94,43 +33,136 @@ func Analyze(inputFilename string, filters *Filters) (*AnalyzeSummary, error) {
 
 	reader := events.NewEventReader(f)
 
-	missingFiles := map[string]any{}
-	failedRenames := map[string]any{}
-	libAnalyzer := newLibraryAnalyzer(filters)
+	analyzers := []analyzer{
+		newOpenAnalyzer(filters, sourceId),
+		newExdevAnalyzer(sourceId),
+		newConnectionAnalyzer(searchPath, sourceId),
+	}
 
+readLoop:
 	for event, err := reader.Read(); err == nil; event, err = reader.Read() {
-		if !filterOpen(filters, event, missingFiles, libAnalyzer) {
+		for _, analyzer := range analyzers {
+			if !analyzer.handleEvent(event) {
+				continue readLoop
+			}
+		}
+	}
+
+	containerSummary := &proto.ContainerAnalysisSummary{}
+
+	for _, analyzer := range analyzers {
+		analyzer.updateSummary(containerSummary)
+	}
+
+	return containerSummary, nil
+}
+
+type sourceTuple struct {
+	Type string
+	Id   string
+}
+
+type sources []*proto.SourceId
+
+func (s sources) Len() int {
+	return len([]*proto.SourceId(s))
+}
+
+func (s sources) Less(i, j int) bool {
+
+	if s[i].Type != s[j].Type {
+		return strings.Compare(s[i].Type, s[j].Type) < 0
+	}
+
+	return strings.Compare(s[i].Id, s[j].Id) < 0
+}
+
+func (s sources) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func findAllSources(inputFilename string) ([]*proto.SourceId, [][]string, error) {
+	sourceMap := map[sourceTuple]*proto.SourceId{}
+	searchMap := map[sourceTuple][]string{}
+
+	f, err := os.Open(inputFilename)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reader := events.NewEventReader(f)
+
+	var event *proto.Event
+
+	for event, err = reader.Read(); true; event, err = reader.Read() {
+		if err != nil {
+			break
+		}
+		if event.GetSource() == nil {
 			continue
 		}
-		if !filterExdev(event, failedRenames) {
+		k := sourceTuple{
+			Type: event.GetSource().GetType(),
+			Id:   event.GetSource().GetId(),
+		}
+
+		sourceMap[k] = event.Source
+		if event.GetDnsSearch() != nil {
+			searchMap[k] = event.GetDnsSearch().GetSearch()
+		}
+	}
+
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, nil, err
+	}
+
+	result := sources{}
+
+	for _, s := range sourceMap {
+		result = append(result, s)
+	}
+
+	sort.Sort(result)
+
+	searchResult := [][]string{}
+	for _, source := range result {
+		searchResult = append(searchResult, searchMap[sourceTuple{
+			Type: source.GetType(),
+			Id:   source.GetId(),
+		}])
+	}
+
+	return result, searchResult, nil
+}
+
+func Analyze(inputFilename string, filters *Filters) (*proto.AnalysisSummary, error) {
+	if filters == nil {
+		filters = defaultFilters
+	}
+
+	sources, searchPaths, err := findAllSources(inputFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &proto.AnalysisSummary{
+		ContainerSummaries: []*proto.AnalysisSummary_ContainerSummaryTuple{},
+	}
+
+	for i, s := range sources {
+		if s.GetType() == "host" {
 			continue
 		}
-	}
-
-	libAnalyzer.filterOutFoundLibraries(missingFiles)
-
-	missingFilesSlice := []string{}
-	missingLibs := map[string]any{}
-	for fname := range missingFiles {
-		if filters.IsLibrary(fname) {
-			missingLibs[filepath.Base(fname)] = nil
-		} else {
-			missingFilesSlice = append(missingFilesSlice, fname)
+		sum, err := analyzeContainer(inputFilename, s, searchPaths[i], filters)
+		if err != nil {
+			return nil, err
 		}
+		summary.ContainerSummaries = append(summary.ContainerSummaries, &proto.AnalysisSummary_ContainerSummaryTuple{
+			Source:  s,
+			Summary: sum,
+		})
+
 	}
 
-	missingLibsSlice := []string{}
-	for fname := range missingLibs {
-		missingLibsSlice = append(missingLibsSlice, fname)
-	}
-
-	failedRenamesSlice := []string{}
-	for fname := range failedRenames {
-		failedRenamesSlice = append(failedRenamesSlice, fname)
-	}
-
-	sort.Strings(missingLibsSlice)
-	sort.Strings(missingFilesSlice)
-
-	return &AnalyzeSummary{MissingFiles: missingFilesSlice, ExdevFailures: failedRenamesSlice, MissingLibs: missingLibsSlice}, nil
+	return summary, nil
 }

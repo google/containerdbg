@@ -21,7 +21,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/envfuncs"
-	dbgenvfuncs "velostrata-internal.googlesource.com/containerdbg.git/test/envfuncs"
 )
 
 var testenv env.Environment
@@ -38,10 +37,12 @@ func TestMain(m *testing.M) {
 
 	testenv.Setup(
 		envfuncs.CreateKindCluster(kindClusterName),
+		envfuncs.LoadDockerImageToCluster(kindClusterName, "tomcat-petclinic"),
 		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/node-daemon"),
 		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/entrypoint"),
+		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/dnsproxy"),
 		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/test-openfile"),
-		dbgenvfuncs.InstallSystem(),
+		envfuncs.LoadDockerImageToCluster(kindClusterName, "ko.local/test-openfile"),
 	)
 
 	testenv.Finish(

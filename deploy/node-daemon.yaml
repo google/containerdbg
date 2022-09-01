@@ -38,7 +38,7 @@ spec:
       containers:
       - name: containerdbg-daemonset
         image: ko.local/node-daemon # kpt-set: ${repo}/node-daemon:${tag}
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent # kpt-set: ${policy}
         env:
         - name: SHARED_DIRECTORY
           value: /var/run/containerdbg/daemon/
@@ -56,6 +56,8 @@ spec:
           mountPropagation: HostToContainer
         - mountPath: /var/run/containerdbg/data/
           name: storage
+        - mountPath: /btf/
+          name: btf
       terminationGracePeriodSeconds: 30
       volumes:
       - name: socket-folder
@@ -72,3 +74,6 @@ spec:
       - hostPath:
           path: /var/run/containerdbg/data
         name: storage
+      - hostPath:
+          path: /var/run/containerdbg/btf
+        name: btf

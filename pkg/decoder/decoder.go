@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"io"
 
+	goyaml "gopkg.in/yaml.v3"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -105,4 +107,22 @@ func DecodeEach(ctx context.Context, manifest io.Reader, handlerFn HandlerFunc, 
 	}
 
 	return nil
+}
+
+func DecodeUnstructured(unstructured *unstructured.Unstructured) (k8s.Object, error) {
+	data, _ := goyaml.Marshal(unstructured.Object)
+	k8sDecoder := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer().Decode
+	runtimeObj, _, err := k8sDecoder(data, nil, nil)
+	if runtime.IsNotRegisteredError(err) {
+		return unstructured, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	obj, ok := runtimeObj.(k8s.Object)
+	if !ok {
+		return nil, fmt.Errorf("couldn't convert %T to Object", obj)
+	}
+
+	return obj, nil
 }

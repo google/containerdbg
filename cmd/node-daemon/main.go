@@ -32,6 +32,7 @@ import (
 	"google.golang.org/grpc/status"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/sources"
 	"velostrata-internal.googlesource.com/containerdbg.git/pkg/logger"
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
@@ -122,7 +123,7 @@ func SwitchEventsFile(fIndex int) (*events.EventWriter, error) {
 }
 
 func EventsPersister(ctx context.Context, log logr.Logger, e <-chan *proto.Event) error {
-	log.Info("opening persistense file", "path", EventsFilePath)
+	log.Info("opening persistence file", "path", EventsFilePath)
 
 	fIndex, err := findLastFileIndex()
 	if err != nil {
@@ -163,9 +164,12 @@ func StartNodeDaemon(ctx context.Context, log logr.Logger, errgr *errgroup.Group
 		return fmt.Errorf("%s env was not provided", consts.SharedDirectoryEnv)
 	}
 
-	mgr := events.NewEventSourceManager()
+	mgr := sources.NewEventSourceManager(log)
 
-	if err := mgr.Load(log); err != nil {
+	dynamicSource := events.NewDynamicSource()
+	mgr.AddEventSource(dynamicSource)
+
+	if err := mgr.Load(); err != nil {
 		return fmt.Errorf("event sources failed to load: %w", err)
 	}
 	defer mgr.Unload()
@@ -185,7 +189,8 @@ func StartNodeDaemon(ctx context.Context, log logr.Logger, errgr *errgroup.Group
 
 	grpcServer := grpc.NewServer(opts...)
 	proto.RegisterNodeDaemonServiceServer(grpcServer, &NodeDaemonServiceServer{
-		Manager: mgr,
+		Manager:       mgr,
+		DynamicSource: *dynamicSource,
 	})
 
 	address := filepath.Join(sharedDir, consts.NodeDaemonSocketName)
@@ -251,6 +256,13 @@ func StartCollectionServer(ctx context.Context, log logr.Logger) error {
 	return srv.Shutdown(context.Background())
 }
 
+func saveTerminationMessage(log logr.Logger, message string) {
+	// We ignore error as there is nothing we can do about it
+	if err := os.WriteFile("/dev/termination-log", []byte(message), os.FileMode(0777)); err != nil {
+		log.Error(err, "error occured while saving termination message")
+	}
+}
+
 func main() {
 	log := logger.NewHeadlessLogger()
 	errgr, ctx := errgroup.WithContext(context.Background())
@@ -262,6 +274,7 @@ func main() {
 	})
 
 	if err := errgr.Wait(); err != nil {
+		saveTerminationMessage(log, err.Error())
 		panic(err)
 	}
 }

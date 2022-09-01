@@ -1,0 +1,57 @@
+# Copyright 2021 Google LLC All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: containerdbg-btf
+---
+# https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: btf-installer
+  namespace: containerdbg-btf
+  labels:
+    app: btf-installer
+spec:
+  selector:
+    matchLabels:
+      app: btf-installer
+  template:
+    metadata:
+      labels:
+        app: btf-installer
+    spec:
+      hostPID: true
+      initContainers:
+      - name: btf-installer
+        image: ko.local/btf-installer # kpt-set: ${repo}/btf-installer:${tag}
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+        - mountPath: /host-btf/
+          name: btf-folder
+      containers:
+      - name: pause
+        image: k8s.gcr.io/pause
+        imagePullPolicy: IfNotPresent
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /var/run/containerdbg/btf
+        name: btf-folder

@@ -15,17 +15,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"net"
-	"net/url"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"syscall"
 	"time"
 
-	"google.golang.org/grpc"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/daemon"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/dnsproxy"
 	"velostrata-internal.googlesource.com/containerdbg.git/proto"
 )
 
@@ -35,41 +34,30 @@ func main() {
 	}
 }
 
-func Dialer(addr string, timeout time.Duration) (net.Conn, error) {
-	url, err := url.Parse(addr)
-	if err != nil {
-		return nil, err
+func waitForResolvModification() {
+	for {
+		data, err := os.ReadFile(dnsproxy.ResolveConfPath)
+		if err != nil {
+			// unknown error, we will ignore in this case
+			fmt.Printf("got error while trying to read %s: %s", dnsproxy.ResolveConfPath, err)
+			break
+		}
+
+		if bytes.Contains(data, []byte(dnsproxy.ContainerdbgComment)) {
+			return
+		}
+		time.Sleep(time.Second)
 	}
-	return net.DialTimeout(url.Scheme, url.Path, timeout)
-}
-
-func createClient(serverAddr string) (proto.NodeDaemonServiceClient, error) {
-
-	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure(), grpc.WithDialer(Dialer))
-	if err != nil {
-		return nil, err
-	}
-
-	return proto.NewNodeDaemonServiceClient(conn), nil
 }
 
 func xmain() error {
-	sharedDir := os.Getenv(consts.SharedDirectoryEnv)
 
-	if sharedDir == "" {
-		return fmt.Errorf("SHARED_DIRECTORY env was not provided")
+	sharedDir, err := daemon.GetAndPrepareSharedDir()
+	if err != nil {
+		panic(err)
 	}
 
-	if err := os.MkdirAll(sharedDir, 0770); err != nil {
-		return err
-	}
-
-	// passthrough prefix - see: https://github.com/grpc/grpc-go/issues/1911
-	// and https://github.com/grpc/grpc-go/issues/1846#issuecomment-362634790
-	url := "passthrough:///unix://" + filepath.Join(sharedDir, consts.NodeDaemonSocketName)
-
-	// TODO: Send grpc to node monitoring daemon to notify about container creation
-	client, err := createClient(url)
+	client, err := daemon.CreateNodeDaemonClient(sharedDir)
 	if err != nil {
 		panic(err)
 	}
@@ -78,6 +66,16 @@ func xmain() error {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("trying to execute %+v", os.Args[1:])
+	path, err := exec.LookPath(os.Args[1])
+	// if err != nil && !errors.Is(err, exec.ErrDot) { // restore in go 1.19
+	// 	return err
+	// } else {
+	// 	fmt.Printf("found binary in %s", path)
+	// }
+
+	waitForResolvModification()
 
 	_, err = client.Monitor(context.Background(), &proto.MonitorPodRequest{
 		Id: &proto.SourceId{
@@ -88,9 +86,7 @@ func xmain() error {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("trying to execute %+v", os.Args[1:])
-	if err := syscall.Exec(os.Args[1], os.Args[1:], os.Environ()); err != nil {
+	if err := syscall.Exec(path, os.Args[1:], os.Environ()); err != nil {
 		panic(err)
 	}
 

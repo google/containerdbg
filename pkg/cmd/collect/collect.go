@@ -31,7 +31,10 @@ type CollectOptions struct {
 func NewCollectCmd(f cmdutil.Factory, streams genericclioptions.IOStreams) *cobra.Command {
 	options := CollectOptions{}
 	cmd := &cobra.Command{
-		Use: "collect",
+		Use:     "collect -o <filename.pb>",
+		Short:   "collect all recordded events from the current containerdbg deployment",
+		Long:    "collect can be used while running a containerdbg deployment to dump the events before finishing the debug session",
+		Example: "collect -o events.pb",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return options.collect(cmd.Context(), f, streams)
 

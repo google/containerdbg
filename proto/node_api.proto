@@ -19,6 +19,8 @@ import "event.proto";
 
 message MonitorPodRequest {
   SourceId id = 1;
+  // 0 means it was not specified
+  uint64 netns = 2;
 }
 
 message MonitorPodResponse {
@@ -29,6 +31,29 @@ message MonitorPodResponse {
   ErrorCode code = 1;
 }
 
+
+message ReportDnsQueryResultRequest {
+  SourceId id = 4;
+  string dns_query = 1;
+  oneof result {
+    string returned_ip = 2;
+    DnsQueryError error = 3;
+  }
+}
+
+message ReportDnsQueryResultResponse {
+
+}
+
+message ReportDnsSearchValuesRequest {
+    repeated string search = 1;
+    SourceId id = 2;
+}
+
+message ReportDnsSearchValuesResponse {}
+
 service NodeDaemonService {
-    rpc Monitor(MonitorPodRequest) returns (MonitorPodResponse);
+  rpc Monitor(MonitorPodRequest) returns (MonitorPodResponse);
+  rpc ReportDnsQuery(ReportDnsQueryResultRequest) returns (ReportDnsQueryResultResponse);
+  rpc ReportDnsSearchValues(ReportDnsSearchValuesRequest) returns (ReportDnsSearchValuesResponse);
 }

@@ -15,12 +15,13 @@
 package linux
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
 )
 
-func GetNetNsId(pid int) (uint64, error) {
+func GetNetNsId(pid int32) (uint64, error) {
 	info, err := os.Stat(fmt.Sprintf("/proc/%d/ns/net", pid))
 	if err != nil {
 		return 0, err
@@ -29,4 +30,14 @@ func GetNetNsId(pid int) (uint64, error) {
 	unixStat := info.Sys().(*syscall.Stat_t)
 
 	return unixStat.Ino, nil
+}
+
+func IsFileExists(filename string) bool {
+	if _, err := os.Stat(filename); err == nil {
+		return true
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false
+	} else {
+		return false // might or might not exist, assume it doesn't
+	}
 }

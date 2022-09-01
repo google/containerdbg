@@ -1,0 +1,61 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Stateful application specification
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  name: petclinic-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petclinic-postgres
+  serviceName: petclinic-postgres
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: petclinic-postgres
+    spec:
+      containers:
+      - env:
+        image: petclinic-postgres
+        imagePullPolicy: Always
+        name: petclinic-postgres
+        resources: {}
+
+---
+# Headless Service specification -
+# No load-balancing, and a single cluster internal IP, only reachable from within the cluster
+# The Kubernetes endpoints controller will modify the DNS configuration to return records (addresses) that point to the Pods, which are labeled with "app": "petclinic-postgres"
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    migrate-for-anthos-optimization: "true"
+    migrate-for-anthos-version: barp-nightly-testing4
+  name: petclinic-postgres
+spec:
+  ports:
+  - name: petclinic-postgres
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: petclinic-postgres
+  type: ClusterIP
+

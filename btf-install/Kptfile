@@ -1,0 +1,16 @@
+apiVersion: kpt.dev/v1
+kind: Kptfile
+metadata:
+  name: containerdbg
+info:
+  description: containerdbg node daemon deployment
+pipeline:
+  mutators:
+    - image: gcr.io/kpt-fn/apply-setters:v0.2.0
+      configMap:
+        repo: eu.gcr.io/velos-auto-1
+        tag: v1.0.0
+inventory:
+  namespace: containerdbg-btf
+  name: inventory-23306427
+  inventoryID: 24dfe76513fa23e12dec47e8ab8f734f104a7597-1657526283402671034

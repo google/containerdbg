@@ -43,23 +43,23 @@ func GetContainerDbgPackage() (string, error) {
 	return path, nil
 }
 
-func EnsureInstallation(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams) error {
+func EnsureInstallation(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams) (bool, error) {
 	f = NewNoNamespaceFactory(f)
 	path, err := GetContainerDbgPackage()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	pkg, err := kpt.LoadPackage(ctx, f, path)
 	if err != nil {
-		return fmt.Errorf("failed to load package: %v", err)
+		return false, fmt.Errorf("failed to load package: %v", err)
 	}
-
-	if err := pkg.Install(ctx, f, streams, consts.ContainerdbgFieldManagerName); err != nil {
+	wasInstalled, err := pkg.Install(ctx, f, streams, consts.ContainerdbgFieldManagerName)
+	if err != nil {
 		pkg.Uninstall(ctx, f, streams) // rollback and ignore error
-		return fmt.Errorf("installation failed: %v", err)
+		return false, fmt.Errorf("installation failed: %v", err)
 	}
-	return nil
+	return wasInstalled, nil
 }
 
 func Uninstall(ctx context.Context, f cmdutil.Factory, streams genericclioptions.IOStreams) error {

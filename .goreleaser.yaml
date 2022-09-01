@@ -1,0 +1,7 @@
+# https://goreleaser.com/customization/build/
+builds:
+  - main: ./cmd/containerdbg
+    ldflags:
+    - -extldflags -static -s -w
+    env:
+    - CGO_ENABLED=0
