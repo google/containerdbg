@@ -102,14 +102,7 @@ Now you can take record.pb and try to get a summary for the issues discovered by
 ```
 While executing the container the following files were missing:
 ===============================================================
-/etc/group is missing
-/etc/passwd is missing
-/etc/selinux/config is missing
-/etc/selinux/contexts/lxc_contexts is missing
-/usr/lib/locale/locale-archive is missing
-/usr/local/openjdk-11/conf/jndi.properties is missing
 /usr/local/tomcat/work/Catalina/localhost/petclinic/SESSIONS.ser is missing
-/usr/share/containers/selinux/contexts is missing
 
 While executing the container the library type files were missing:
 ==================================================================
@@ -138,3 +131,20 @@ It means your cluster does not have btf support, in order to resolve this issue 
 4. run `make install-btf`
 
 The program should run succefully now.
+
+Contributing
+============
+Contributions are welcome, see [CONTRIBUTING](./CONTRIBUTING.md)
+
+Community
+========
+
+**Come and ask us questions**
+* [containerdbg-users mailing list](https://groups.google.com/g/containerdbg-users)
+* For issues and feature requests please open a GitHub [issue](https://github.com/google/containerdbg/issues/new).
+
+Thanks
+======
+
+* [miekg/dns](https://github.com/miekg/dns): containerdbg uses miekg's DNS library to trace all DNS requests coming from workloads.
+* [cilium/ebpf](https://github.com/cilium/ebpf): containerdbg uses the Cilium eBPF library to inspect workloads.

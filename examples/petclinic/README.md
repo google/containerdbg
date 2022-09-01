@@ -3,10 +3,10 @@
 In this example we will show how you can use containerdbg in order to debug petclinic, an application which allows you to manage a clinic for pets.
 
 The application contains:
-1. A tomcat server with the web application written in java.
+1. A tomcat server with the web application written in Java.
 2. A posgres DB which contains the information about the pets.
 
-In addition the normal petclinic java web app, the app has been modified to throw exception by trying to open non existant files on specific actions, an issue which we will debug.
+In addition the normal petclinic Java web app, the app has been modified to throw exception by trying to open non existant files on specific actions, an issue which we will debug.
 
 The code for the petclinic application can be found in examples/spring-framework-petclinic/ and is a modified version of the opensource [project](https://github.com/spring-petclinic/spring-framework-petclinic)
 
@@ -102,15 +102,8 @@ this should produce the following output:
 ```
 While executing the container the following files were missing:
 ===============================================================
- is missing
-/etc/group is missing
-/etc/passwd is missing
-/etc/selinux/config is missing
-/etc/selinux/contexts/lxc_contexts is missing
-/usr/lib/locale/locale-archive is missing
 /usr/local/openjdk-11/conf/jndi.properties is missing
 /usr/local/tomcat/work/Catalina/localhost/petclinic/SESSIONS.ser is missing
-/usr/share/containers/selinux/contexts is missing
 
 While executing the container the library type files were missing:
 ==================================================================
