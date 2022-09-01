@@ -2,16 +2,15 @@ name: Regression tests
 
 
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    types: [opened, edited, synchronize]
   push:
     branches:
     - 'main'
 
 jobs:
-  test:
+  presubmit:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request_review' || github.event.review.state == 'approved'
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v3
