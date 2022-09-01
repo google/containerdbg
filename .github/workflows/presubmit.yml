@@ -22,22 +22,7 @@ jobs:
     - name: Set up libbpf
       env:
         SUDO: sudo
-      run: |
-        set -ex
-        LIBBPF_VERSION=0.7.0
-        
-        $SUDO apt-get -y install libelf-dev
-        
-        mkdir libbpf
-        pushd libbpf
-        
-        wget https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.gz
-        tar xf v${LIBBPF_VERSION}.tar.gz
-        cd libbpf-${LIBBPF_VERSION}/src
-        make
-        $SUDO make install
-        popd
-        rm -rf libbpf
+      run: ./test/image/install_libbpf.sh
     - name: Install kpt
       run: ./test/image/install_kpt.sh
       env:
