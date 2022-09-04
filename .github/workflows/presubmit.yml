@@ -63,5 +63,12 @@ jobs:
         version: v0.13.0
         skipClusterCreation: "true"
     - name: test
+      if: github.event_name == 'push'
+      run: |
+        sudo env "PATH=$PATH" make test
+    - name: test
+      if: github.event_name != 'push'
+      env:
+        TEST_FLAGS: --skip-labels "type=stability"
       run: |
         sudo env "PATH=$PATH" make test

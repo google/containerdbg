@@ -34,7 +34,7 @@ func TestStress(t *testing.T) {
 		t.Skip()
 	}
 	fileFilterFeature := features.New("ebpf filters stress").
-		WithLabel("type", "component").
+		WithLabel("type", "stability").
 		Assess("open no event drops", func(ctx context.Context, t *testing.T, _ *envconf.Config) context.Context {
 			openFilesFilter := ebpf.OpenFilesFilter{}
 			if err := openFilesFilter.Load(testr.NewWithOptions(t, testr.Options{
