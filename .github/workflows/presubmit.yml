@@ -5,10 +5,12 @@ on:
   pull_request:
     types: [opened, edited, synchronize]
     paths-ignore:
-    - '*.md'
+    - '**.md'
   push:
     branches:
     - 'main'
+    paths-ignore:
+    - '**.md'
 
 jobs:
   presubmit:
