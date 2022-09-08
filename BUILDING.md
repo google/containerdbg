@@ -12,13 +12,13 @@ make all
 Requirments
 =====================
 
-Compiling:
+The following libraries are required in order to succefully compile:
 
-1. libbpf-dev
-1. clang
+1. libbpf-dev - on Debian/Ubuntu can be installed by running `sudo ./test/image/install_libbpf.sh`
+1. clang - on Debian/Ubuntu can be installed by running `sudo apt-get install clang-13`
 1. [ko](https://github.com/google/ko)
 
-Testing:
+The following tools are required to succefully run tests on the project:
 
 1. Docker
 1. [Kind](https://kind.sigs.k8s.io/)

@@ -15,7 +15,7 @@
 
 LIBBPF_VERSION=0.7.0
 
-${SUDO} apt-get -y install libelf-dev
+${SUDO} apt-get -y install libelf-dev wget make gcc pkg-config
 
 mkdir libbpf
 pushd libbpf

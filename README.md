@@ -44,6 +44,11 @@ Currently the tool looks for the following common issues:
   configuration.
 
 
+Building
+========
+Check out [BUILDING](BUILDING.md)
+
+
 Usage
 =====
 In this section we will show 2 main usage scenarios for containerdbg.
