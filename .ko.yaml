@@ -13,4 +13,4 @@
 # limitations under the License.
 
 baseImageOverrides:
-  velostrata-internal.googlesource.com/containerdbg.git/cmd/entrypoint: debian:stable-slim
+  github.com/google/containerdbg/cmd/entrypoint: debian:stable-slim

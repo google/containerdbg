@@ -20,7 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/analyze"
+	"github.com/google/containerdbg/pkg/analyze"
 )
 
 type AnalyzeOptions struct {

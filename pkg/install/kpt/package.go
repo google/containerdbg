@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/cli-utils/pkg/common"
 	"sigs.k8s.io/cli-utils/pkg/inventory"
 	"sigs.k8s.io/cli-utils/pkg/kstatus/polling"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/printers/table"
+	"github.com/google/containerdbg/pkg/printers/table"
 )
 
 func InstallRG(ctx context.Context, f cmdutil.Factory) error {

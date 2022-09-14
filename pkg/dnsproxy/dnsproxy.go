@@ -22,7 +22,7 @@ import (
 	"regexp"
 
 	"github.com/miekg/dns"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/proto"
 )
 
 const ResolveConfPath = "/etc/resolv.conf"

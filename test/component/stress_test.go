@@ -25,8 +25,8 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/ebpf"
-	pb "velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/ebpf"
+	pb "github.com/google/containerdbg/proto"
 )
 
 func TestStress(t *testing.T) {

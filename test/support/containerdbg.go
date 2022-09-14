@@ -30,7 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
+	"github.com/google/containerdbg/pkg/consts"
 )
 
 func DumpContainerDbgLogs(ctx context.Context, t *testing.T, clientset *kubernetes.Clientset) {

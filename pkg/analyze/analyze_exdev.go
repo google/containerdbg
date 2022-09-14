@@ -17,7 +17,7 @@ package analyze
 import (
 	"path/filepath"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/proto"
 )
 
 type exdevAnalyzer struct {

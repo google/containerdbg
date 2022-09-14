@@ -17,7 +17,7 @@ package support
 import (
 	"testing"
 
-	pb "velostrata-internal.googlesource.com/containerdbg.git/proto"
+	pb "github.com/google/containerdbg/proto"
 )
 
 func openEqual(actual, expected *pb.Event_SyscallEvent_Open) bool {

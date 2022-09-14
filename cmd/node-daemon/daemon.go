@@ -18,11 +18,11 @@ import (
 	"github.com/go-logr/logr"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/ebpf"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/sources"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/linux"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/ebpf"
+	"github.com/google/containerdbg/pkg/events"
+	"github.com/google/containerdbg/pkg/events/sources"
+	"github.com/google/containerdbg/pkg/linux"
+	"github.com/google/containerdbg/proto"
 )
 
 type NodeDaemonServiceServer struct {

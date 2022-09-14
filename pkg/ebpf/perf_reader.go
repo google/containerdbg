@@ -20,7 +20,7 @@ import (
 
 	"github.com/cilium/ebpf/perf"
 	"github.com/go-logr/logr"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/proto"
 )
 
 type eventParserFunc func(sample []byte) (*proto.Event, error)

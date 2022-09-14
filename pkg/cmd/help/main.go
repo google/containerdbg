@@ -20,7 +20,7 @@ import (
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd"
+	"github.com/google/containerdbg/pkg/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )

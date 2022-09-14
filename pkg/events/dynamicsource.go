@@ -19,8 +19,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/api"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/events/api"
+	"github.com/google/containerdbg/proto"
 )
 
 type DynamicSource struct {

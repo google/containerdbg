@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/polymorphichelpers"
+	"github.com/google/containerdbg/pkg/polymorphichelpers"
 )
 
 type tunnelHandler func(port int, podName string, namespace string) error

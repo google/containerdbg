@@ -15,13 +15,13 @@
 package debug
 
 import (
+	"github.com/google/containerdbg/pkg/build"
+	"github.com/google/containerdbg/pkg/imagehelpers"
+	"github.com/google/containerdbg/pkg/rand"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/build"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/imagehelpers"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/rand"
 )
 
 func CreateDebugDeploymentForImage(imagename string, namespace string) (*appsv1.Deployment, error) {
@@ -125,7 +125,7 @@ func ModifyPodSpec(podspec *v1.PodSpec) error {
 		Image:           build.ImageRepo + "/entrypoint",
 		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
 		Command: []string{
-			"cp",
+			"/bin/cp",
 			"/ko-app/entrypoint",
 			"/.containerdbg",
 		},

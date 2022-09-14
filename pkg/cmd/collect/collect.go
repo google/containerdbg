@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/collect"
+	"github.com/google/containerdbg/pkg/collect"
 )
 
 type CollectOptions struct {

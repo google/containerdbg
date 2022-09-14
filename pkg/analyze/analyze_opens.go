@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/proto"
 )
 
 type analyzeOpen struct {

@@ -23,8 +23,8 @@ import (
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/btf"
 	"github.com/cilium/ebpf/rlimit"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/linux"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/linux"
+	"github.com/google/containerdbg/proto"
 )
 
 //go:generate go run -mod=mod github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS pinnedmaps pinned_maps.c -- -I./headers

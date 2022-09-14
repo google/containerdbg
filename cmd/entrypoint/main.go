@@ -23,9 +23,9 @@ import (
 	"syscall"
 	"time"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/daemon"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/dnsproxy"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/daemon"
+	"github.com/google/containerdbg/pkg/dnsproxy"
+	"github.com/google/containerdbg/proto"
 )
 
 func main() {

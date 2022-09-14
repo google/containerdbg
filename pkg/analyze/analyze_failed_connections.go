@@ -17,7 +17,7 @@ package analyze
 import (
 	"strings"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/proto"
 )
 
 type connectionTuple struct {

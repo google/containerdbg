@@ -16,7 +16,7 @@ package version
 
 import (
 	"github.com/spf13/cobra"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/build"
+	"github.com/google/containerdbg/pkg/build"
 )
 
 func NewVersionCmd() *cobra.Command {
