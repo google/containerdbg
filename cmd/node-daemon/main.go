@@ -30,11 +30,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/sources"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/logger"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/consts"
+	"github.com/google/containerdbg/pkg/events"
+	"github.com/google/containerdbg/pkg/events/sources"
+	"github.com/google/containerdbg/pkg/logger"
+	"github.com/google/containerdbg/proto"
 )
 
 const MaxWrittenEventsPerFile = 10000

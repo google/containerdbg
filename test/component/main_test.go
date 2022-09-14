@@ -23,7 +23,7 @@ import (
 	"github.com/cilium/ebpf/rlimit"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/ebpf"
+	"github.com/google/containerdbg/pkg/ebpf"
 )
 
 var test env.Environment

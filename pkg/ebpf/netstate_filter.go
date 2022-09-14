@@ -24,8 +24,8 @@ import (
 	"github.com/cilium/ebpf/perf"
 	"github.com/go-logr/logr"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/api"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/events/api"
+	"github.com/google/containerdbg/proto"
 )
 
 //go:generate go run -mod=mod github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS netstate netstate_filter.c -- -I./headers

@@ -14,7 +14,7 @@
 
 package analyze
 
-import "velostrata-internal.googlesource.com/containerdbg.git/proto"
+import "github.com/google/containerdbg/proto"
 
 type analyzer interface {
 	handleEvent(event *proto.Event) bool

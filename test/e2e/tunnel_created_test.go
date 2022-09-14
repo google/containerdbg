@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/connect"
-	"velostrata-internal.googlesource.com/containerdbg.git/test/support"
+	"github.com/google/containerdbg/pkg/connect"
+	"github.com/google/containerdbg/test/support"
 )
 
 func TestTunnelWorks(t *testing.T) {

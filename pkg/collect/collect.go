@@ -23,8 +23,8 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/connect"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
+	"github.com/google/containerdbg/pkg/connect"
+	"github.com/google/containerdbg/pkg/consts"
 )
 
 func CollectRecordedData(ctx context.Context, f cmdutil.Factory, outputStream io.Writer) error {

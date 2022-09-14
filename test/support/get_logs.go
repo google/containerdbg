@@ -25,7 +25,7 @@ import (
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/reference"
 	"k8s.io/kubectl/pkg/scheme"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/polymorphichelpers"
+	"github.com/google/containerdbg/pkg/polymorphichelpers"
 )
 
 func GetLogsForObject(ctx context.Context, podsGetter corev1client.PodsGetter, object runtime.Object) (string, error) {

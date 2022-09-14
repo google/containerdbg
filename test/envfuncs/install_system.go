@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"velostrata-internal.googlesource.com/containerdbg.git/test/support"
+	"github.com/google/containerdbg/test/support"
 )
 
 func InstallSystem() env.Func {

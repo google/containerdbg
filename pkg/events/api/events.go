@@ -18,7 +18,7 @@ import (
 	"io"
 
 	"github.com/go-logr/logr"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/proto"
 )
 
 type EventsSource interface {

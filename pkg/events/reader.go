@@ -19,7 +19,7 @@ import (
 	"io"
 
 	"google.golang.org/protobuf/proto"
-	pb "velostrata-internal.googlesource.com/containerdbg.git/proto"
+	pb "github.com/google/containerdbg/proto"
 )
 
 type EventReader struct {

@@ -1,4 +1,4 @@
-module velostrata-internal.googlesource.com/containerdbg.git
+module github.com/google/containerdbg
 
 go 1.18
 

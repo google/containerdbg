@@ -21,8 +21,8 @@ import (
 	"sort"
 	"strings"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/events"
+	"github.com/google/containerdbg/proto"
 )
 
 func analyzeContainer(inputFilename string, sourceId *proto.SourceId, searchPath []string, filters *Filters) (*proto.ContainerAnalysisSummary, error) {

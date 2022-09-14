@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes/scheme"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/k8s"
+	"github.com/google/containerdbg/pkg/k8s"
 )
 
 type Options struct {

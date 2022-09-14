@@ -23,9 +23,9 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/rand"
-	"velostrata-internal.googlesource.com/containerdbg.git/test/support"
+	"github.com/google/containerdbg/pkg/events"
+	"github.com/google/containerdbg/pkg/rand"
+	"github.com/google/containerdbg/test/support"
 )
 
 func helperFindEvent(t *testing.T, filename string) bool {

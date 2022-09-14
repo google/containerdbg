@@ -23,7 +23,7 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	utilpointer "k8s.io/utils/pointer"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd"
+	"github.com/google/containerdbg/pkg/cmd"
 )
 
 func NewTestRootCmd(cfg *envconf.Config, interruptCh <-chan os.Signal) (*cobra.Command, *bytes.Buffer, *bytes.Buffer, *bytes.Buffer) {

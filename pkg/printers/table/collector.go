@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/cli-utils/pkg/object/validation"
 	"sigs.k8s.io/cli-utils/pkg/print/stats"
 	"sigs.k8s.io/cli-utils/pkg/print/table"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/decoder"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/polymorphichelpers"
+	"github.com/google/containerdbg/pkg/decoder"
+	"github.com/google/containerdbg/pkg/polymorphichelpers"
 )
 
 // mostly copied from https://github.com/kubernetes-sigs/cli-utils/blob/master/pkg/printers/table/collector.go

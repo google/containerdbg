@@ -21,8 +21,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/prototext"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/events"
+	"github.com/google/containerdbg/proto"
 )
 
 func NewConvertCmd(streams genericclioptions.IOStreams) *cobra.Command {

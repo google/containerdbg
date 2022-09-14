@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/consts"
+	"github.com/google/containerdbg/proto"
 )
 
 func dialer(addr string, timeout time.Duration) (net.Conn, error) {

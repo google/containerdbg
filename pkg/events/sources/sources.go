@@ -16,9 +16,9 @@ package sources
 
 import (
 	"github.com/go-logr/logr"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/ebpf"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/api"
-	"velostrata-internal.googlesource.com/containerdbg.git/proto"
+	"github.com/google/containerdbg/pkg/ebpf"
+	"github.com/google/containerdbg/pkg/events/api"
+	"github.com/google/containerdbg/proto"
 )
 
 var defaultEventSources = []api.EventsSource{

@@ -24,9 +24,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	"velostrata-internal.googlesource.com/containerdbg.git/deploy"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/consts"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/install/kpt"
+	"github.com/google/containerdbg/deploy"
+	"github.com/google/containerdbg/pkg/consts"
+	"github.com/google/containerdbg/pkg/install/kpt"
 )
 
 type Object interface {

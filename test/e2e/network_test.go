@@ -31,10 +31,10 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/rand"
-	pb "velostrata-internal.googlesource.com/containerdbg.git/proto"
-	"velostrata-internal.googlesource.com/containerdbg.git/test/support"
+	"github.com/google/containerdbg/pkg/events"
+	"github.com/google/containerdbg/pkg/rand"
+	pb "github.com/google/containerdbg/proto"
+	"github.com/google/containerdbg/test/support"
 )
 
 func helperTestNetEventIsRecorded(t *testing.T, ctx context.Context, cfg *envconf.Config, expectedEvent *pb.Event_Network, dnsEvent *pb.Event_DnsQueryEvent, namespace string, debugParams ...string) context.Context {

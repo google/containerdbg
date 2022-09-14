@@ -26,11 +26,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/ebpf"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/events/api"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/linux"
-	pb "velostrata-internal.googlesource.com/containerdbg.git/proto"
-	"velostrata-internal.googlesource.com/containerdbg.git/test/support"
+	"github.com/google/containerdbg/pkg/ebpf"
+	"github.com/google/containerdbg/pkg/events/api"
+	"github.com/google/containerdbg/pkg/linux"
+	pb "github.com/google/containerdbg/proto"
+	"github.com/google/containerdbg/test/support"
 )
 
 func runBinaryWithNewNSAndAttach(t *testing.T, path string, args []string, exitChan chan<- interface{}) {

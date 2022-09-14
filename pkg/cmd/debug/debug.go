@@ -25,12 +25,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	dbgcmdutil "velostrata-internal.googlesource.com/containerdbg.git/pkg/cmdutil"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/collect"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/debug"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/decoder"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/install"
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/k8s"
+	dbgcmdutil "github.com/google/containerdbg/pkg/cmdutil"
+	"github.com/google/containerdbg/pkg/collect"
+	"github.com/google/containerdbg/pkg/debug"
+	"github.com/google/containerdbg/pkg/decoder"
+	"github.com/google/containerdbg/pkg/install"
+	"github.com/google/containerdbg/pkg/k8s"
 )
 
 type debugOptions struct {
