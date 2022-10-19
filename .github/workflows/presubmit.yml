@@ -69,6 +69,6 @@ jobs:
     - name: test
       if: github.event_name != 'push'
       env:
-        TEST_FLAGS: --skip-labels "type=stability"
+        TEST_FLAGS: -short
       run: |
-        sudo env "PATH=$PATH" make test
+        sudo env "PATH=$PATH" "TEST_FLAGS=$TEST_FLAGS" make test

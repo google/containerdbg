@@ -21,9 +21,9 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf/rlimit"
+	"github.com/google/containerdbg/pkg/ebpf"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"github.com/google/containerdbg/pkg/ebpf"
 )
 
 var test env.Environment
