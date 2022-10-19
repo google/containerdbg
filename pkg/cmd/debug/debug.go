@@ -72,7 +72,7 @@ func NewDebugCmd(f cmdutil.Factory, streams genericclioptions.IOStreams, interru
 	}
 
 	cmd.Flags().BoolVarP(&o.keepInstall, "keep", "k", false, "if specified will not uninstall containerdbg from cluster")
-	cmd.Flags().StringVarP(&o.outputFilename, "output", "o", "", "the output filename to which we will save the events.json file")
+	cmd.Flags().StringVarP(&o.outputFilename, "output", "o", "", "the output filename to which we will save the events.pb file")
 	cmd.Flags().StringVarP(&o.yamlFilename, "filename", "f", "", "A yaml describing a deployment containerdbg should debug. Cannot be supplied if specifying an image")
 	cmd.Flags().StringVarP(&o.imageName, "image", "i", "", "An image path to deploy and debug. Cannot be supplied with a yaml file")
 
@@ -192,6 +192,8 @@ func (o *debugOptions) debugImage(ctx context.Context, f cmdutil.Factory, stream
 	fmt.Fprintf(streams.ErrOut, "Press Ctrl-C to finish the debugging session and download the collected report\n\n")
 
 	<-interrupttedCtx.Done()
+
+	fmt.Fprintf(streams.ErrOut, "Debug session ended succefully, cleaning up...")
 
 	if err := collect.CollectRecordedData(ctx, f, outFile); err != nil {
 		return fmt.Errorf("failed to collect data from system %v", err)
