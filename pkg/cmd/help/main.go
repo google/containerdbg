@@ -28,7 +28,7 @@ import (
 var dir string
 var root = &cobra.Command{
 	Use:   "gendoc",
-	Short: "Generate crane's help docs",
+	Short: "generate crane's help docs",
 	Args:  cobra.NoArgs,
 	RunE: func(*cobra.Command, []string) error {
 		done := make(chan os.Signal, 1)

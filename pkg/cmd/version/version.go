@@ -21,7 +21,8 @@ import (
 
 func NewVersionCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "version",
+		Use:   "version",
+		Short: "print the version of containerdbg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Printf("Version: %s-%s\n", build.Version, build.GitSha)
 			return nil
