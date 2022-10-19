@@ -40,8 +40,9 @@ type attachOptions struct {
 func NewAttachCmd(f cmdutil.Factory, streams genericclioptions.IOStreams, interruptCh <-chan os.Signal) *cobra.Command {
 	o := attachOptions{}
 	cmd := &cobra.Command{
-		Use:  "attach <pod name>",
-		Args: cobra.ExactArgs(1),
+		Use:   "attach <pod name>",
+		Short: "attach debugger to a running pod",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.podname = args[0]
 			return o.attach(cmd.Context(), f, streams, interruptCh)

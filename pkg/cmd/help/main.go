@@ -20,15 +20,15 @@ import (
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
-	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"velostrata-internal.googlesource.com/containerdbg.git/pkg/cmd"
 )
 
 var dir string
 var root = &cobra.Command{
 	Use:   "gendoc",
-	Short: "Generate crane's help docs",
+	Short: "generate crane's help docs",
 	Args:  cobra.NoArgs,
 	RunE: func(*cobra.Command, []string) error {
 		done := make(chan os.Signal, 1)
