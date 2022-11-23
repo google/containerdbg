@@ -43,7 +43,7 @@
     <spring-data.version>2021.1.0-RC1</spring-data.version>
     <hibernate.version>5.6.0.Final</hibernate.version>
     <hibernate-validator.version>6.2.0.Final</hibernate-validator.version>
-    <hsqldb.version>2.5.2</hsqldb.version>
+    <hsqldb.version>2.7.1</hsqldb.version>
     <h2database.version>2.1.210</h2database.version>
 
     <!-- Logging -->
