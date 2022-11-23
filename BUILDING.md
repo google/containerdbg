@@ -9,14 +9,39 @@ export TARGET_REPO=<your container registry>
 make all
 ```
 
-Requirments
+Dependencies
 =====================
 
+## local build
 The following libraries are required in order to succefully compile:
 
-1. libbpf-dev - on Debian/Ubuntu can be installed by running `sudo ./test/image/install_libbpf.sh`
-1. clang - on Debian/Ubuntu can be installed by running `sudo apt-get install clang-13`
+1. libbpf-dev
+   1. on Debian/Ubuntu can be installed by running `sudo ./test/image/install_libbpf.sh`
+
+1. clang
+   1. On Debian/Ubuntu can be installed using `sudo apt-get install clang-13`
+
 1. [ko](https://github.com/google/ko)
+   1. can be installed using `go install github.com/google/ko@latest` (make sure `$HOME/go/bin` is in your `PATH`)
+
+1. kpt
+   1. `wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.23/kpt_linux_amd64`
+   1. `sudo cp kpt_linux_amd64 /usr/local/bin/`
+
+1. If compiling for local use, Docker is required
+   1. https://docs.docker.com/engine/install/ubuntu/
+   1. Allow sudoless docker by running `sudo adduser $USER docker`
+
+
+## container build
+
+Alternatively you could use our test image to build using the following command:
+
+```bash	
+docker run -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/build -w /build eu.gcr.io/modernize-prow/containerdbg-test:latest make all
+```
+
+## testing dependencies
 
 The following tools are required to succefully run tests on the project:
 
@@ -58,6 +83,7 @@ being available.
 It does rely on kernel to be built with [BTF type
 information](https://www.kernel.org/doc/html/latest/bpf/btf.html), though.
 Some major Linux distributions come with kernel BTF already built in:
+
   - Fedora 31+
   - RHEL 8.2+
   - OpenSUSE Tumbleweed (in the next release, as of 2020-06-04)
