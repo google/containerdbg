@@ -28,7 +28,7 @@ import (
 	"github.com/google/containerdbg/test/support"
 )
 
-func helperFindEvent(t *testing.T, filename string) bool {
+func helperFindEvent(t *testing.T, filename string, containers int) bool {
 
 	t.Helper()
 	// Very damp scanning for the failed open file
@@ -37,6 +37,7 @@ func helperFindEvent(t *testing.T, filename string) bool {
 		t.Fatal(err)
 	}
 	reader := events.NewEventReader(recordsFile)
+	containersFound := map[string]any{}
 	for event, err := reader.Read(); err == nil; event, err = reader.Read() {
 		t.Logf("event line %+v", event)
 		syscall := event.GetSyscall()
@@ -44,19 +45,22 @@ func helperFindEvent(t *testing.T, filename string) bool {
 			continue
 		}
 		if syscall.GetOpen().GetPath() == "/doesnotexists" {
-			return true
+			containersFound[event.Source.Id] = nil
+			if len(containersFound) >= containers {
+				return true
+			}
 		}
 	}
 
 	return false
 }
 
-func helperTestOpenIsRecorded(t *testing.T, ctx context.Context, cfg *envconf.Config, namespace string, debugParams ...string) context.Context {
+func helperTestOpenIsRecorded(t *testing.T, ctx context.Context, cfg *envconf.Config, namespace string, containers int, debugParams ...string) context.Context {
 	tmpFileName := path.Join(t.TempDir(), "events.json")
 
 	support.RunContainerDebug(t, ctx, cfg, tmpFileName, namespace, debugParams...)
 
-	if !helperFindEvent(t, tmpFileName) {
+	if !helperFindEvent(t, tmpFileName, containers) {
 		t.Fatal("did not find open file event")
 	}
 
@@ -68,10 +72,10 @@ func TestFullE2EFlow(t *testing.T) {
 		WithLabel("type", "e2e").
 		Assess("containerdbg debug captures the open", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			namespace := "debug-" + rand.RandStringRunes(10)
-			return helperTestOpenIsRecorded(t, ctx, cfg, namespace, "-n", namespace, "-i", "ko.local/test-openfile")
+			return helperTestOpenIsRecorded(t, ctx, cfg, namespace, 1, "-n", namespace, "-i", "ko.local/test-openfile")
 		}).Assess("containerdbg debug captures the open for yaml file", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		namespace := "debug-" + rand.RandStringRunes(10)
-		return helperTestOpenIsRecorded(t, ctx, cfg, namespace, "-n", namespace, "-f", "../../examples/normal_deployment.yaml")
+		return helperTestOpenIsRecorded(t, ctx, cfg, namespace, 2, "-n", namespace, "-f", "../../examples/normal_deployment.yaml")
 	}).Feature()
 
 	testenv.Test(t, systemInstallation)

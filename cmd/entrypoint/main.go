@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/containerdbg/pkg/consts"
 	"github.com/google/containerdbg/pkg/daemon"
 	"github.com/google/containerdbg/pkg/dnsproxy"
 	"github.com/google/containerdbg/proto"
@@ -80,7 +81,7 @@ func xmain() error {
 	_, err = client.Monitor(context.Background(), &proto.MonitorPodRequest{
 		Id: &proto.SourceId{
 			Type: "container",
-			Id:   hostname,
+			Id:   hostname + "-" + os.Getenv(consts.ContainerNameEnv),
 		},
 	})
 	if err != nil {

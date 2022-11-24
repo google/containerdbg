@@ -68,7 +68,7 @@ func CreateDaemonServiceClient(sourceId *proto.SourceId) proto.NodeDaemonService
 	} else {
 		var err error
 		fmt.Printf("connecting to grpc at %s\n", daemonProxy)
-		nsId, err := linux.GetNetNsId(int32(os.Getpid()))
+		nsId, err := linux.GetMntNsId(int32(os.Getpid()))
 		if err != nil {
 			panic(err)
 		}
@@ -97,7 +97,7 @@ func main() {
 	}
 	sourceId := &proto.SourceId{
 		Type: "container",
-		Id:   hostname,
+		Id:   hostname + "-" + os.Getenv(consts.ContainerNameEnv),
 	}
 	client := CreateDaemonServiceClient(sourceId)
 	search, err := retrieveSearchList()

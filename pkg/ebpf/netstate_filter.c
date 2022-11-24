@@ -145,7 +145,7 @@ int trace_inet_sock_set_state(
     struct event_t e = {};
     e.last_state = oldstate;
     e.new_state = newstate;
-    e.netns = get_current_net_ns();
+    e.netns = get_current_ns();
     e.tid = tid;
     e.ts = bpf_ktime_get_ns();
     bpf_get_current_comm(&e.comm, sizeof(e.comm));

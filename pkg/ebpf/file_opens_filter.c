@@ -153,7 +153,7 @@ static int exit_open_common(void *ctx, u64 ret) {
     bpf_map_delete_elem(&filename_map, &tid);
     return 0;
   }
-  event->netns = get_current_net_ns();
+  event->netns = get_current_ns();
   event->tid = tid;
   event->ret = ret;
   event->ts = bpf_ktime_get_ns();

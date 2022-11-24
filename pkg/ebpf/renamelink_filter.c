@@ -185,7 +185,7 @@ int sys_exit_rename(struct exit_rename_info *info) {
     return 0;
   }
 
-  event->netns = get_current_net_ns();
+  event->netns = get_current_ns();
   event->tid = tid;
   event->ret = info->ret;
   event->ts = bpf_ktime_get_ns();

@@ -35,6 +35,9 @@ spec:
       - image: ko.local/test-openfile
         imagePullPolicy: IfNotPresent
         name: openfile-deployment
+      - image: ko.local/test-openfile
+        imagePullPolicy: IfNotPresent
+        name: openfile-deployment2
 
 ---
 # Headless Service specification -
