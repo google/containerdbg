@@ -15,6 +15,7 @@
 package consts
 
 const SharedDirectoryEnv = "SHARED_DIRECTORY"
+const ContainerNameEnv = "CONTAINER_NAME"
 const NodeDaemonSocketName = "node.sock"
 const ContainerdbgNamespace = "containerdbg-system"
 const ContainerdbgDaemonsetName = "containerdbg-daemonset"

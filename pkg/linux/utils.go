@@ -21,8 +21,8 @@ import (
 	"syscall"
 )
 
-func GetNetNsId(pid int32) (uint64, error) {
-	info, err := os.Stat(fmt.Sprintf("/proc/%d/ns/net", pid))
+func GetMntNsId(pid int32) (uint64, error) {
+	info, err := os.Stat(fmt.Sprintf("/proc/%d/ns/mnt", pid))
 	if err != nil {
 		return 0, err
 	}

@@ -49,7 +49,7 @@ func runBinaryWithNewNSAndAttach(t *testing.T, path string, args []string, exitC
 		t.Fatal("failed to run test binary", err)
 	}
 
-	netId, err := linux.GetNetNsId(int32(cmd.Process.Pid))
+	netId, err := linux.GetMntNsId(int32(cmd.Process.Pid))
 	if err != nil {
 		t.Fatal("failed to get namespace of command", err)
 	}

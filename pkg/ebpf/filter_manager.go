@@ -111,7 +111,7 @@ func (mgr *filtersManager) Init() error {
 
 func (mgr *filtersManager) RegisterContainer(nsId uint32, id *proto.SourceId) error {
 	mgr.idMap.Store(nsId, id)
-	if err := mgr.pinnedMaps.NetNs.Put(nsId, uint8(1)); err != nil {
+	if err := mgr.pinnedMaps.FollowNs.Put(nsId, uint8(1)); err != nil {
 		mgr.idMap.Delete(nsId)
 		return err
 	}
