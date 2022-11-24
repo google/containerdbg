@@ -24,17 +24,17 @@ struct {
   __uint(value_size, sizeof(u8));
   __uint(max_entries, 1 << 10);
   __uint(pinning, LIBBPF_PIN_BY_NAME);
-} net_ns SEC(".maps");
+} follow_ns SEC(".maps");
 
-static u32 get_current_net_ns() {
+static u32 get_current_ns() {
   struct task_struct *curtask = (struct task_struct *)bpf_get_current_task();
 
-  return BPF_CORE_READ(curtask, nsproxy, net_ns, ns.inum);
+  return BPF_CORE_READ(curtask, nsproxy, mnt_ns, ns.inum);
 }
 
 static inline bool is_correct_namespace() {
-  u32 current_ns = get_current_net_ns();
-  u8 *expected_ns = (u8 *)bpf_map_lookup_elem(&net_ns, &current_ns);
+  u32 current_ns = get_current_ns();
+  u8 *expected_ns = (u8 *)bpf_map_lookup_elem(&follow_ns, &current_ns);
   if (expected_ns == NULL) {
     return false;
   }

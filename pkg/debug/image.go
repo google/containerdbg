@@ -16,6 +16,7 @@ package debug
 
 import (
 	"github.com/google/containerdbg/pkg/build"
+	"github.com/google/containerdbg/pkg/consts"
 	"github.com/google/containerdbg/pkg/imagehelpers"
 	"github.com/google/containerdbg/pkg/rand"
 	appsv1 "k8s.io/api/apps/v1"
@@ -103,6 +104,14 @@ func modifyContainer(container *v1.Container) error {
 		return err
 	}
 	container.Command = append([]string{"/.containerdbg/entrypoint"}, result...)
+	if container.Env == nil {
+		container.Env = []v1.EnvVar{}
+	}
+
+	container.Env = append(container.Env, v1.EnvVar{
+		Name:  consts.ContainerNameEnv,
+		Value: container.Name,
+	})
 	return nil
 }
 

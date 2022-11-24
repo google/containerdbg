@@ -16,13 +16,13 @@ package main
 
 import (
 	"github.com/go-logr/logr"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/peer"
 	"github.com/google/containerdbg/pkg/ebpf"
 	"github.com/google/containerdbg/pkg/events"
 	"github.com/google/containerdbg/pkg/events/sources"
 	"github.com/google/containerdbg/pkg/linux"
 	"github.com/google/containerdbg/proto"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/peer"
 )
 
 type NodeDaemonServiceServer struct {
@@ -56,7 +56,7 @@ func (srv *NodeDaemonServiceServer) Monitor(ctx context.Context, request *proto.
 		authInfo := UnixAuthFromContext(ctx)
 		log.Info("Got request from", "authInfo", authInfo)
 		pid := authInfo.creds.Pid
-		nsId, err = linux.GetNetNsId(pid)
+		nsId, err = linux.GetMntNsId(pid)
 		if err != nil {
 			return nil, err
 		}
@@ -81,11 +81,11 @@ func (srv *NodeDaemonServiceServer) ReportDnsQuery(ctx context.Context, request 
 		authInfo := UnixAuthFromContext(ctx)
 		pid := authInfo.creds.Pid
 
-		netns, err := linux.GetNetNsId(pid)
+		mntns, err := linux.GetMntNsId(pid)
 		if err != nil {
 			return nil, err
 		}
-		source = ebpf.GetManagerInstance().GetId(uint32(netns))
+		source = ebpf.GetManagerInstance().GetId(uint32(mntns))
 	}
 
 	log.Info("got dns event", "event", request)
