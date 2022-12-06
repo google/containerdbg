@@ -1,10 +1,11 @@
 steps:
-- name: 'gcr.io/cloud-builders/go'
-  entrypoint: 'bash'
+- name: eu.gcr.io/modernize-prow/containerdbg-test:latest
+  entrypoint: 'sh'
   env:
   - TARGET_REPO=${_TARGET_REPO}
   args:
   - '-c'
-  - 'make images'
+  - |
+    make images
 substitutions:
   _TARGET_REPO: europe-docker.pkg.dev/migrate-modernize-public/containerdbg
