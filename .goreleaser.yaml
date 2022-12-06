@@ -3,6 +3,10 @@ builds:
   - main: ./cmd/containerdbg
     ldflags:
     - -extldflags -static -s -w
+    - -X github.com/google/containerdbg/pkg/build.ImageRepo={{.Env.TARGET_REPO}}
+    - -X github.com/google/containerdbg/pkg/build.PullPolicy=IfNotPresent
+    - -X github.com/google/containerdbg/pkg/build.Version={{.Tag}}
+    - -X github.com/google/containerdbg/pkg/build.GitSha={{.ShortCommit}}
     env:
     - CGO_ENABLED=0
 changelog:
