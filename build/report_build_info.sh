@@ -16,7 +16,6 @@
 git_rev=${GIT_REV:-$(git rev-parse --short HEAD)}
 
 # used by hack/gobuild.sh
-echo "main.vendorVersion=${GIT_REV}"
 echo "github.com/google/containerdbg/pkg/build.ImageRepo=${TARGET_REPO}"
 echo "github.com/google/containerdbg/pkg/build.PullPolicy=${IMAGE_PULL_POLICY}"
 echo "github.com/google/containerdbg/pkg/build.Version=${BUILD_VERSION:-$git_rev}"

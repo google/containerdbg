@@ -33,6 +33,7 @@ jobs:
         args: release --rm-dist
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TARGET_REPO: europe-docker.pkg.dev/migrate-modernize-public/containerdbg
     - name: Generate subject
       id: hash
       env:
