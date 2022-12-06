@@ -25,6 +25,9 @@ jobs:
         version: 'v1.0.0-beta.19'
         name: 'kpt'
     - name: generate
+      env:
+        TARGET_REPO: europe-docker.pkg.dev/migrate-modernize-public/containerdbg
+        IMAGE_PULL_POLICY: IfNotPresent
       run: make pre
     - uses: goreleaser/goreleaser-action@v3.1.0
       id: run-goreleaser
