@@ -52,7 +52,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
     with:
       base64-subjects: "${{ needs.goreleaser.outputs.hashes }}"
       upload-assets: true
@@ -67,7 +67,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
-        gh -R slsa-framework/slsa-verifier release download v1.2.0 -p "slsa-verifier-linux-amd64"
+        gh -R slsa-framework/slsa-verifier release download v1.4.0 -p "slsa-verifier-linux-amd64"
         chmod ug+x slsa-verifier-linux-amd64
         COMPUTED_HASH=$(sha256sum slsa-verifier-linux-amd64 | cut -d ' ' -f1)
         EXPECTED_HASH="37db23392c7918bb4e243cdb097ed5f9d14b9b965dc1905b25bc2d1c0c91bf3d"
