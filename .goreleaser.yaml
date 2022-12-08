@@ -16,3 +16,4 @@ changelog:
     exclude:
     - '^docs[(\\w)]*:+.*$'
     - '^test[(\\w)]*:+.*$'
+    - '^build[(\\w)]*:+.*$'
