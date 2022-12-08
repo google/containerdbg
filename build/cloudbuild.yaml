@@ -3,6 +3,7 @@ steps:
   entrypoint: 'sh'
   env:
   - TARGET_REPO=${_TARGET_REPO}
+  - TAG=${TAG_NAME}
   args:
   - '-c'
   - |

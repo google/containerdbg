@@ -7,6 +7,7 @@ builds:
     - -X github.com/google/containerdbg/pkg/build.PullPolicy=IfNotPresent
     - -X github.com/google/containerdbg/pkg/build.Version={{.Tag}}
     - -X github.com/google/containerdbg/pkg/build.GitSha={{.ShortCommit}}
+    - -X github.com/google/containerdbg/pkg/build.ImageVersion={{.Tag}}
     env:
     - CGO_ENABLED=0
 changelog:
