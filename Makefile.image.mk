@@ -1,15 +1,15 @@
 
 .PHONY: node-daemon
 node-daemon: generate
-	KO_DOCKER_REPO=${TARGET_REPO} ko build -B ./cmd/node-daemon/
+	KO_DOCKER_REPO=${TARGET_REPO} ko build -B ./cmd/node-daemon/ -t ${TAG}
 
 .PHONY: containerdbg-entrypoint
 containerdbg-entrypoint: generate
-	KO_DOCKER_REPO=${TARGET_REPO} ko build -B ./cmd/entrypoint/
+	KO_DOCKER_REPO=${TARGET_REPO} ko build -B ./cmd/entrypoint/ -t ${TAG}
 
 .PHONY: dnsproxy
 dnsproxy: generate
-	KO_DOCKER_REPO=${TARGET_REPO} ko build -B ./cmd/dnsproxy/
+	KO_DOCKER_REPO=${TARGET_REPO} ko build -B ./cmd/dnsproxy/ -t ${TAG}
 
 .PHONY: test-binary
 test-binary: generate
