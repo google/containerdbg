@@ -118,7 +118,7 @@ func modifyContainer(container *v1.Container) error {
 func GetDnsProxyContainer() v1.EphemeralContainerCommon {
 	return v1.EphemeralContainerCommon{
 		Name:            "dnsproxy",
-		Image:           build.ImageRepo + "/dnsproxy",
+		Image:           build.ImageRepo + "/dnsproxy:" + build.ImageVersion,
 		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
 		SecurityContext: &v1.SecurityContext{
 			Privileged: pointer.Bool(true),
@@ -131,7 +131,7 @@ func GetDnsProxyContainer() v1.EphemeralContainerCommon {
 func ModifyPodSpec(podspec *v1.PodSpec) error {
 	podspec.InitContainers = append(podspec.InitContainers, v1.Container{
 		Name:            "copy-entrypoint",
-		Image:           build.ImageRepo + "/entrypoint",
+		Image:           build.ImageRepo + "/entrypoint:" + build.ImageVersion,
 		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
 		Command: []string{
 			"/bin/cp",
