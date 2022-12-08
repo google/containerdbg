@@ -41,7 +41,7 @@ Download the pre-compiled binaries:
 * [MacOS (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.7/containerdbg_0.0.7_darwin_arm64.tar.gz)
 
 ```bash
-VERSION=0.0.1
+VERSION=0.0.7
 OS=linux
 ARCH=amd64
 tar xf containerdbg_${VERSION}_${OS}_${ARCH}.tar.gz
