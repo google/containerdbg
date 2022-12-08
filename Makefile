@@ -5,6 +5,7 @@ TARGET_REPO ?= ko.local
 export TARGET_REPO
 
 IMAGE_PULL_POLICY ?= IfNotPresent
+TAG ?= latest
 
 
 ifeq ($(TARGET_REPO),ko.local)
