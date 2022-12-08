@@ -10,3 +10,4 @@ steps:
     make images
 substitutions:
   _TARGET_REPO: europe-docker.pkg.dev/migrate-modernize-public/containerdbg
+logsBucket: modernize-prow_cloudbuild-logs
