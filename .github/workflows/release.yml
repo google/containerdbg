@@ -24,10 +24,14 @@ jobs:
         uri: 'https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.19/kpt_linux_amd64'
         version: 'v1.0.0-beta.19'
         name: 'kpt'
+    - name: Set tag
+      id: vars
+      run: echo "::set-output name=tag::${GITHUB_REF#refs/*/}"
     - name: generate
       env:
         TARGET_REPO: europe-docker.pkg.dev/migrate-modernize-public/containerdbg
         IMAGE_PULL_POLICY: IfNotPresent
+        TAG: ${{ steps.vars.outputs.tag }}
       run: make pre
     - uses: goreleaser/goreleaser-action@v3.1.0
       id: run-goreleaser
