@@ -24,15 +24,15 @@ export REGISTRY=<my repository>
 2. Run the following command to generate the tomcat yaml
 ```
 cd tomcat
-skaffold build -d $REGISTRY -o artifacts.json
-skaffold render -a artifacts.json > ../tomcat.yaml
+skaffold build -d $REGISTRY --file-output artifacts.json
+skaffold render -d $REGISTRY -a artifacts.json > ../tomcat.yaml
 cd ..
 ```
 3. Run the following command to generate the db yaml
 ```
 cd db
-skaffold build -d $REGISTRY -o artifacts.json
-skaffold render -a artifacts.json > ../db.yaml
+skaffold build -d $REGISTRY --file-output artifacts.json
+skaffold render -d $REGISTRY -a artifacts.json > ../db.yaml
 cd ..
 ```
 
