@@ -35,13 +35,13 @@ Currently the tool looks for the following common issues:
 
 Download the pre-compiled binaries:
 
-* [Linux (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.7/containerdbg_0.0.7_linux_amd64.tar.gz)
-* [Linux (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.7/containerdbg_0.0.7_linux_arm64.tar.gz)
-* [MacOS (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.7/containerdbg_0.0.7_darwin_amd64.tar.gz)
-* [MacOS (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.7/containerdbg_0.0.7_darwin_arm64.tar.gz)
+* [Linux (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_linux_amd64.tar.gz)
+* [Linux (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_linux_arm64.tar.gz)
+* [MacOS (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_darwin_amd64.tar.gz)
+* [MacOS (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_darwin_arm64.tar.gz)
 
 ```bash
-VERSION=0.0.7
+VERSION=0.0.8
 OS=linux
 ARCH=amd64
 tar xf containerdbg_${VERSION}_${OS}_${ARCH}.tar.gz
