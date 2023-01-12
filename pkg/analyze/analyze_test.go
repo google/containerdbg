@@ -17,9 +17,9 @@ package analyze
 import (
 	"testing"
 
+	"github.com/google/containerdbg/proto"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"github.com/google/containerdbg/proto"
 )
 
 func TestAnalyze(t *testing.T) {
@@ -131,7 +131,7 @@ func TestAnalyze(t *testing.T) {
 			},
 		},
 		{
-			name:     "connection failed to external service error",
+			name:     "connection failed to external service error ubuntu",
 			dataFile: "./testdata/tomcat-ubuntu-host.pb",
 			expected: &proto.AnalysisSummary{
 				ContainerSummaries: []*proto.AnalysisSummary_ContainerSummaryTuple{
