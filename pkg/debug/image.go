@@ -116,7 +116,7 @@ func modifyContainer(container *v1.Container) error {
 }
 
 func GetDnsProxyContainer() v1.EphemeralContainerCommon {
-	return v1.EphemeralContainerCommon{
+	container := v1.EphemeralContainerCommon{
 		Name:            "dnsproxy",
 		Image:           build.ImageRepo + "/dnsproxy:" + build.ImageVersion,
 		ImagePullPolicy: v1.PullPolicy(build.PullPolicy),
@@ -126,6 +126,8 @@ func GetDnsProxyContainer() v1.EphemeralContainerCommon {
 			RunAsGroup: pointer.Int64(0),
 		},
 	}
+
+	return container
 }
 
 func ModifyPodSpec(podspec *v1.PodSpec) error {

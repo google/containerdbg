@@ -150,7 +150,7 @@ func Analyze(inputFilename string, filters *Filters) (*proto.AnalysisSummary, er
 	}
 
 	for i, s := range sources {
-		if s.GetType() == "host" {
+		if s.GetType() == "host" || s.GetType() == "pod" {
 			continue
 		}
 		sum, err := analyzeContainer(inputFilename, s, searchPaths[i], filters)

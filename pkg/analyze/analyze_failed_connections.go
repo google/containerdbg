@@ -121,8 +121,27 @@ func (analyzer *connectionAnalyzer) handleDnsEvent(dns *proto.Event_DnsQueryEven
 	return true
 }
 
+func (analyzer *connectionAnalyzer) isEventRelevant(event *proto.Event) bool {
+	// TODO: compare the host id
+	if event.GetSource().GetType() == "host" {
+		return true
+	}
+	if event.GetSource().GetType() == "container" {
+		if event.GetSource().GetId() == analyzer.sourceId.GetId() {
+			return true
+		}
+	} else if event.GetSource().GetType() == "pod" {
+		if event.GetSource().GetId() == analyzer.sourceId.GetParent() {
+			return true
+		}
+	}
+
+	return false
+
+}
+
 func (analyzer *connectionAnalyzer) handleEvent(event *proto.Event) bool {
-	if (event.GetSource().GetId() != analyzer.sourceId.GetId() || event.GetSource().GetType() != analyzer.sourceId.GetType()) && (event.GetSource().GetType() != "host") {
+	if !analyzer.isEventRelevant(event) {
 		return true
 	}
 	net := event.GetNetwork()

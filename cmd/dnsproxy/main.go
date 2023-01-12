@@ -96,8 +96,8 @@ func main() {
 		panic(err)
 	}
 	sourceId := &proto.SourceId{
-		Type: "container",
-		Id:   hostname + "-" + os.Getenv(consts.ContainerNameEnv),
+		Type: "pod",
+		Id:   hostname,
 	}
 	client := CreateDaemonServiceClient(sourceId)
 	search, err := retrieveSearchList()
