@@ -1,3 +1,5 @@
+// Package analyze is responsible for failure analysis logic from debugged container
+//
 // Copyright 2022 Google LLC All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,9 +83,9 @@ func (s sources) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func findAllSources(inputFilename string) ([]*proto.SourceId, [][]string, error) {
-	sourceMap := map[sourceTuple]*proto.SourceId{}
-	searchMap := map[sourceTuple][]string{}
+func findAllSources(inputFilename string) (result []*proto.SourceId, searchResult [][]string, err error) {
+	sourceToId := map[sourceTuple]*proto.SourceId{}
+	searchToQueries := map[sourceTuple][]string{}
 
 	f, err := os.Open(inputFilename)
 	if err != nil {
@@ -106,9 +108,9 @@ func findAllSources(inputFilename string) ([]*proto.SourceId, [][]string, error)
 			Id:   event.GetSource().GetId(),
 		}
 
-		sourceMap[k] = event.Source
+		sourceToId[k] = event.Source
 		if event.GetDnsSearch() != nil {
-			searchMap[k] = event.GetDnsSearch().GetSearch()
+			searchToQueries[k] = event.GetDnsSearch().GetSearch()
 		}
 	}
 
@@ -116,23 +118,20 @@ func findAllSources(inputFilename string) ([]*proto.SourceId, [][]string, error)
 		return nil, nil, err
 	}
 
-	result := sources{}
-
-	for _, s := range sourceMap {
+	for _, s := range sourceToId {
 		result = append(result, s)
 	}
 
-	sort.Sort(result)
+	sort.Sort(sources(result))
 
-	searchResult := [][]string{}
 	for _, source := range result {
-		searchResult = append(searchResult, searchMap[sourceTuple{
+		searchResult = append(searchResult, searchToQueries[sourceTuple{
 			Type: source.GetType(),
 			Id:   source.GetId(),
 		}])
 	}
 
-	return result, searchResult, nil
+	return
 }
 
 func Analyze(inputFilename string, filters *Filters) (*proto.AnalysisSummary, error) {
