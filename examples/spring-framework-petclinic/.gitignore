@@ -10,6 +10,7 @@ bin/
 
 # Maven
 target/
+.mvn/wrapper/maven-wrapper.jar
 
 # OS
 .DS_Store

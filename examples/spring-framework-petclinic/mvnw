@@ -34,6 +34,8 @@
 #   MAVEN_SKIP_RC - flag to disable loading of mavenrc files
 # ----------------------------------------------------------------------------
 
+curl -L https://github.com/spring-petclinic/spring-framework-petclinic/raw/main/.mvn/wrapper/maven-wrapper.jar -o .mvn/wrapper/maven-wrapper.jar
+
 if [ -z "$MAVEN_SKIP_RC" ] ; then
 
   if [ -f /etc/mavenrc ] ; then
