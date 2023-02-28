@@ -2,7 +2,7 @@ containerdbg: Automate container debugging tasks
 ============
 
 containerdbg is an all-in-one command-line tool to help debug Kubernetes
-containers with common issues that arouse when moving to containers as part of
+containers with common issues that arise when moving to containers as part of
 legacy application modernization.
 
 Currently the tool looks for the following common issues:
