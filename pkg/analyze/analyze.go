@@ -18,6 +18,7 @@ package analyze
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sort"
@@ -98,6 +99,7 @@ func findAllSources(inputFilename string) (result []*proto.SourceId, searchResul
 
 	for event, err = reader.Read(); true; event, err = reader.Read() {
 		if err != nil {
+			fmt.Printf("err encountered: %v\n", err)
 			break
 		}
 		if event.GetSource() == nil {
@@ -117,6 +119,8 @@ func findAllSources(inputFilename string) (result []*proto.SourceId, searchResul
 	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, nil, err
 	}
+
+	err = nil
 
 	for _, s := range sourceToId {
 		result = append(result, s)

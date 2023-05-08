@@ -33,8 +33,10 @@ test-in-container:
 		-v /sys/kernel/debug/:/sys/kernel/debug/ \
 		-v /sys/fs/bpf/:/sys/fs/bpf/ \
 		-v ${PWD}/artifacts:/artifacts \
+		-v ${HOME}/.config/gcloud/application_default_credentials.json:/tmp/keys/creds.json \
 		-e TEST_FLAGS=$(TEST_FLAGS) \
 		-e COVERPROFILE=/artifacts/cover.prof \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/creds.json \
 		eu.gcr.io/modernize-prow/containerdbg-test:latest \
 		./test/image/runner.sh make test
 
