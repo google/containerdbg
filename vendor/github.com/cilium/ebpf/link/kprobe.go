@@ -1,7 +1,6 @@
 package link
 
 import (
-	"bytes"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"syscall"
 	"unsafe"
 
@@ -20,12 +18,6 @@ import (
 
 var (
 	kprobeEventsPath = filepath.Join(tracefsPath, "kprobe_events")
-
-	kprobeRetprobeBit = struct {
-		once  sync.Once
-		value uint64
-		err   error
-	}{}
 )
 
 type probeType uint8
@@ -33,7 +25,7 @@ type probeType uint8
 type probeArgs struct {
 	symbol, group, path          string
 	offset, refCtrOffset, cookie uint64
-	pid                          int
+	pid, retprobeMaxActive       int
 	ret                          bool
 }
 
@@ -49,6 +41,12 @@ type KprobeOptions struct {
 	// Can be used to insert kprobes at arbitrary offsets in kernel functions,
 	// e.g. in places where functions have been inlined.
 	Offset uint64
+	// Increase the maximum number of concurrent invocations of a kretprobe.
+	// Required when tracing some long running functions in the kernel.
+	//
+	// Deprecated: this setting forces the use of an outdated kernel API and is not portable
+	// across kernel versions.
+	RetprobeMaxActive int
 }
 
 const (
@@ -81,13 +79,6 @@ func (pt probeType) PerfEventType(ret bool) perfEventType {
 		return uretprobeEvent
 	}
 	return uprobeEvent
-}
-
-func (pt probeType) RetprobeBit() (uint64, error) {
-	if pt == kprobeType {
-		return kretprobeBit()
-	}
-	return uretprobeBit()
 }
 
 // Kprobe attaches the given eBPF program to a perf event that fires when the
@@ -123,6 +114,9 @@ func Kprobe(symbol string, prog *ebpf.Program, opts *KprobeOptions) (Link, error
 // Losing the reference to the resulting Link (kp) will close the Kretprobe
 // and prevent further execution of prog. The Link must be Closed during
 // program shutdown to avoid leaking system resources.
+//
+// On kernels 5.10 and earlier, setting a kretprobe on a nonexistent symbol
+// incorrectly returns unix.EINVAL instead of os.ErrNotExist.
 func Kretprobe(symbol string, prog *ebpf.Program, opts *KprobeOptions) (Link, error) {
 	k, err := kprobe(symbol, prog, opts, true)
 	if err != nil {
@@ -188,13 +182,14 @@ func kprobe(symbol string, prog *ebpf.Program, opts *KprobeOptions, ret bool) (*
 	}
 
 	if opts != nil {
+		args.retprobeMaxActive = opts.RetprobeMaxActive
 		args.cookie = opts.Cookie
 		args.offset = opts.Offset
 	}
 
 	// Use kprobe PMU if the kernel has it available.
 	tp, err := pmuKprobe(args)
-	if errors.Is(err, os.ErrNotExist) {
+	if errors.Is(err, os.ErrNotExist) || errors.Is(err, unix.EINVAL) {
 		args.symbol = platformPrefix(symbol)
 		tp, err = pmuKprobe(args)
 	}
@@ -208,7 +203,7 @@ func kprobe(symbol string, prog *ebpf.Program, opts *KprobeOptions, ret bool) (*
 	// Use tracefs if kprobe PMU is missing.
 	args.symbol = symbol
 	tp, err = tracefsKprobe(args)
-	if errors.Is(err, os.ErrNotExist) {
+	if errors.Is(err, os.ErrNotExist) || errors.Is(err, unix.EINVAL) {
 		args.symbol = platformPrefix(symbol)
 		tp, err = tracefsKprobe(args)
 	}
@@ -235,14 +230,22 @@ func pmuKprobe(args probeArgs) (*perfEvent, error) {
 func pmuProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 	// Getting the PMU type will fail if the kernel doesn't support
 	// the perf_[k,u]probe PMU.
-	et, err := getPMUEventType(typ)
+	et, err := readUint64FromFileOnce("%d\n", "/sys/bus/event_source/devices", typ.String(), "type")
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("%s: %w", typ, ErrNotSupported)
+	}
 	if err != nil {
 		return nil, err
 	}
 
+	// Use tracefs if we want to set kretprobe's retprobeMaxActive.
+	if args.retprobeMaxActive != 0 {
+		return nil, fmt.Errorf("pmu probe: non-zero retprobeMaxActive: %w", ErrNotSupported)
+	}
+
 	var config uint64
 	if args.ret {
-		bit, err := typ.RetprobeBit()
+		bit, err := readUint64FromFileOnce("config:%d\n", "/sys/bus/event_source/devices", typ.String(), "/format/retprobe")
 		if err != nil {
 			return nil, err
 		}
@@ -250,8 +253,9 @@ func pmuProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 	}
 
 	var (
-		attr unix.PerfEventAttr
-		sp   unsafe.Pointer
+		attr  unix.PerfEventAttr
+		sp    unsafe.Pointer
+		token string
 	)
 	switch typ {
 	case kprobeType:
@@ -260,6 +264,8 @@ func pmuProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		token = kprobeToken(args)
 
 		attr = unix.PerfEventAttr{
 			// The minimum size required for PMU kprobes is PERF_ATTR_SIZE_VER1,
@@ -280,6 +286,8 @@ func pmuProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 			config |= args.refCtrOffset << uprobeRefCtrOffsetShift
 		}
 
+		token = uprobeToken(args)
+
 		attr = unix.PerfEventAttr{
 			// The minimum size required for PMU uprobes is PERF_ATTR_SIZE_VER1,
 			// since it added the config2 (Ext2) field. The Size field controls the
@@ -299,26 +307,27 @@ func pmuProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 	// return -EINVAL. Return ErrNotSupported to allow falling back to tracefs.
 	// https://github.com/torvalds/linux/blob/94710cac0ef4/kernel/trace/trace_kprobe.c#L340-L343
 	if errors.Is(err, unix.EINVAL) && strings.Contains(args.symbol, ".") {
-		return nil, fmt.Errorf("symbol '%s+%#x': older kernels don't accept dots: %w", args.symbol, args.offset, ErrNotSupported)
+		return nil, fmt.Errorf("token %s: older kernels don't accept dots: %w", token, ErrNotSupported)
 	}
 	// Since commit 97c753e62e6c, ENOENT is correctly returned instead of EINVAL
-	// when trying to create a kretprobe for a missing symbol. Make sure ENOENT
-	// is returned to the caller.
-	if errors.Is(err, os.ErrNotExist) || errors.Is(err, unix.EINVAL) {
-		return nil, fmt.Errorf("symbol '%s+%#x' not found: %w", args.symbol, args.offset, os.ErrNotExist)
+	// when trying to create a retprobe for a missing symbol.
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("token %s: not found: %w", token, err)
 	}
-	// Since commit ab105a4fb894, -EILSEQ is returned when a kprobe sym+offset is resolved
-	// to an invalid insn boundary.
-	if errors.Is(err, syscall.EILSEQ) {
-		return nil, fmt.Errorf("symbol '%s+%#x' not found (bad insn boundary): %w", args.symbol, args.offset, os.ErrNotExist)
+	// Since commit ab105a4fb894, EILSEQ is returned when a kprobe sym+offset is resolved
+	// to an invalid insn boundary. The exact conditions that trigger this error are
+	// arch specific however.
+	if errors.Is(err, unix.EILSEQ) {
+		return nil, fmt.Errorf("token %s: bad insn boundary: %w", token, os.ErrNotExist)
 	}
 	// Since at least commit cb9a19fe4aa51, ENOTSUPP is returned
 	// when attempting to set a uprobe on a trap instruction.
-	if errors.Is(err, unix.ENOTSUPP) {
-		return nil, fmt.Errorf("failed setting uprobe on offset %#x (possible trap insn): %w", args.offset, err)
+	if errors.Is(err, sys.ENOTSUPP) {
+		return nil, fmt.Errorf("token %s: failed setting uprobe on offset %#x (possible trap insn): %w", token, args.offset, err)
 	}
+
 	if err != nil {
-		return nil, fmt.Errorf("opening perf event: %w", err)
+		return nil, fmt.Errorf("token %s: opening perf event: %w", token, err)
 	}
 
 	// Ensure the string pointer is not collected before PerfEventOpen returns.
@@ -360,32 +369,20 @@ func tracefsProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 	}
 	args.group = group
 
-	// Before attempting to create a trace event through tracefs,
-	// check if an event with the same group and name already exists.
-	// Kernels 4.x and earlier don't return os.ErrExist on writing a duplicate
-	// entry, so we need to rely on reads for detecting uniqueness.
-	_, err = getTraceEventID(group, args.symbol)
-	if err == nil {
-		return nil, fmt.Errorf("trace event already exists: %s/%s", group, args.symbol)
-	}
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("checking trace event %s/%s: %w", group, args.symbol, err)
-	}
-
 	// Create the [k,u]probe trace event using tracefs.
-	if err := createTraceFSProbeEvent(typ, args); err != nil {
-		return nil, fmt.Errorf("creating probe entry on tracefs: %w", err)
-	}
-
-	// Get the newly-created trace event's id.
-	tid, err := getTraceEventID(group, args.symbol)
+	tid, err := createTraceFSProbeEvent(typ, args)
 	if err != nil {
-		return nil, fmt.Errorf("getting trace event id: %w", err)
+		return nil, fmt.Errorf("creating probe entry on tracefs: %w", err)
 	}
 
 	// Kprobes are ephemeral tracepoints and share the same perf event type.
 	fd, err := openTracepointPerfEvent(tid, args.pid)
 	if err != nil {
+		// Make sure we clean up the created tracefs event when we return error.
+		// If a livepatch handler is already active on the symbol, the write to
+		// tracefs will succeed, a trace event will show up, but creating the
+		// perf event will fail with EBUSY.
+		_ = closeTraceFSProbeEvent(typ, args.group, args.symbol)
 		return nil, err
 	}
 
@@ -399,15 +396,32 @@ func tracefsProbe(typ probeType, args probeArgs) (*perfEvent, error) {
 	}, nil
 }
 
-// createTraceFSProbeEvent creates a new ephemeral trace event by writing to
-// <tracefs>/[k,u]probe_events. Returns os.ErrNotExist if symbol is not a valid
+var errInvalidMaxActive = errors.New("can only set maxactive on kretprobes")
+
+// createTraceFSProbeEvent creates a new ephemeral trace event.
+//
+// Returns os.ErrNotExist if symbol is not a valid
 // kernel symbol, or if it is not traceable with kprobes. Returns os.ErrExist
-// if a probe with the same group and symbol already exists.
-func createTraceFSProbeEvent(typ probeType, args probeArgs) error {
+// if a probe with the same group and symbol already exists. Returns an error if
+// args.retprobeMaxActive is used on non kprobe types. Returns ErrNotSupported if
+// the kernel is too old to support kretprobe maxactive.
+func createTraceFSProbeEvent(typ probeType, args probeArgs) (uint64, error) {
+	// Before attempting to create a trace event through tracefs,
+	// check if an event with the same group and name already exists.
+	// Kernels 4.x and earlier don't return os.ErrExist on writing a duplicate
+	// entry, so we need to rely on reads for detecting uniqueness.
+	_, err := getTraceEventID(args.group, args.symbol)
+	if err == nil {
+		return 0, fmt.Errorf("trace event %s/%s: %w", args.group, args.symbol, os.ErrExist)
+	}
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("checking trace event %s/%s: %w", args.group, args.symbol, err)
+	}
+
 	// Open the kprobe_events file in tracefs.
 	f, err := os.OpenFile(typ.EventsPath(), os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		return fmt.Errorf("error opening '%s': %w", typ.EventsPath(), err)
+		return 0, fmt.Errorf("error opening '%s': %w", typ.EventsPath(), err)
 	}
 	defer f.Close()
 
@@ -428,8 +442,11 @@ func createTraceFSProbeEvent(typ probeType, args probeArgs) error {
 		// subsampling or rate limiting logic can be more accurately implemented in
 		// the eBPF program itself.
 		// See Documentation/kprobes.txt for more details.
+		if args.retprobeMaxActive != 0 && !args.ret {
+			return 0, errInvalidMaxActive
+		}
 		token = kprobeToken(args)
-		pe = fmt.Sprintf("%s:%s/%s %s", probePrefix(args.ret), args.group, sanitizeSymbol(args.symbol), token)
+		pe = fmt.Sprintf("%s:%s/%s %s", probePrefix(args.ret, args.retprobeMaxActive), args.group, sanitizeSymbol(args.symbol), token)
 	case uprobeType:
 		// The uprobe_events syntax is as follows:
 		// p[:[GRP/]EVENT] PATH:OFFSET [FETCHARGS] : Set a probe
@@ -441,38 +458,63 @@ func createTraceFSProbeEvent(typ probeType, args probeArgs) error {
 		// p:ebpf_5678/main_mySymbol /bin/mybin:0x12345(0x123)
 		//
 		// See Documentation/trace/uprobetracer.txt for more details.
+		if args.retprobeMaxActive != 0 {
+			return 0, errInvalidMaxActive
+		}
 		token = uprobeToken(args)
-		pe = fmt.Sprintf("%s:%s/%s %s", probePrefix(args.ret), args.group, args.symbol, token)
+		pe = fmt.Sprintf("%s:%s/%s %s", probePrefix(args.ret, 0), args.group, args.symbol, token)
 	}
 	_, err = f.WriteString(pe)
+
 	// Since commit 97c753e62e6c, ENOENT is correctly returned instead of EINVAL
-	// when trying to create a kretprobe for a missing symbol. Make sure ENOENT
-	// is returned to the caller.
-	// EINVAL is also returned on pre-5.2 kernels when the `SYM[+offs]` token
-	// is resolved to an invalid insn boundary.
-	if errors.Is(err, os.ErrNotExist) || errors.Is(err, unix.EINVAL) {
-		return fmt.Errorf("token %s: %w", token, os.ErrNotExist)
+	// when trying to create a retprobe for a missing symbol.
+	if errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("token %s: not found: %w", token, err)
 	}
-	// Since commit ab105a4fb894, -EILSEQ is returned when a kprobe sym+offset is resolved
-	// to an invalid insn boundary.
+	// Since commit ab105a4fb894, EILSEQ is returned when a kprobe sym+offset is resolved
+	// to an invalid insn boundary. The exact conditions that trigger this error are
+	// arch specific however.
 	if errors.Is(err, syscall.EILSEQ) {
-		return fmt.Errorf("token %s: bad insn boundary: %w", token, os.ErrNotExist)
+		return 0, fmt.Errorf("token %s: bad insn boundary: %w", token, os.ErrNotExist)
 	}
 	// ERANGE is returned when the `SYM[+offs]` token is too big and cannot
 	// be resolved.
 	if errors.Is(err, syscall.ERANGE) {
-		return fmt.Errorf("token %s: offset too big: %w", token, os.ErrNotExist)
-	}
-	if err != nil {
-		return fmt.Errorf("writing '%s' to '%s': %w", pe, typ.EventsPath(), err)
+		return 0, fmt.Errorf("token %s: offset too big: %w", token, os.ErrNotExist)
 	}
 
-	return nil
+	if err != nil {
+		return 0, fmt.Errorf("token %s: writing '%s': %w", token, pe, err)
+	}
+
+	// Get the newly-created trace event's id.
+	tid, err := getTraceEventID(args.group, args.symbol)
+	if args.retprobeMaxActive != 0 && errors.Is(err, os.ErrNotExist) {
+		// Kernels < 4.12 don't support maxactive and therefore auto generate
+		// group and event names from the symbol and offset. The symbol is used
+		// without any sanitization.
+		// See https://elixir.bootlin.com/linux/v4.10/source/kernel/trace/trace_kprobe.c#L712
+		event := fmt.Sprintf("kprobes/r_%s_%d", args.symbol, args.offset)
+		if err := removeTraceFSProbeEvent(typ, event); err != nil {
+			return 0, fmt.Errorf("failed to remove spurious maxactive event: %s", err)
+		}
+		return 0, fmt.Errorf("create trace event with non-default maxactive: %w", ErrNotSupported)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("get trace event id: %w", err)
+	}
+
+	return tid, nil
 }
 
 // closeTraceFSProbeEvent removes the [k,u]probe with the given type, group and symbol
 // from <tracefs>/[k,u]probe_events.
 func closeTraceFSProbeEvent(typ probeType, group, symbol string) error {
+	pe := fmt.Sprintf("%s/%s", group, sanitizeSymbol(symbol))
+	return removeTraceFSProbeEvent(typ, pe)
+}
+
+func removeTraceFSProbeEvent(typ probeType, pe string) error {
 	f, err := os.OpenFile(typ.EventsPath(), os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		return fmt.Errorf("error opening %s: %w", typ.EventsPath(), err)
@@ -481,9 +523,8 @@ func closeTraceFSProbeEvent(typ probeType, group, symbol string) error {
 
 	// See [k,u]probe_events syntax above. The probe type does not need to be specified
 	// for removals.
-	pe := fmt.Sprintf("-:%s/%s", group, sanitizeSymbol(symbol))
-	if _, err = f.WriteString(pe); err != nil {
-		return fmt.Errorf("writing '%s' to '%s': %w", pe, typ.EventsPath(), err)
+	if _, err = f.WriteString("-:" + pe); err != nil {
+		return fmt.Errorf("remove event %q from %s: %w", pe, typ.EventsPath(), err)
 	}
 
 	return nil
@@ -511,40 +552,14 @@ func randomGroup(prefix string) (string, error) {
 	return group, nil
 }
 
-func probePrefix(ret bool) string {
+func probePrefix(ret bool, maxActive int) string {
 	if ret {
+		if maxActive > 0 {
+			return fmt.Sprintf("r%d", maxActive)
+		}
 		return "r"
 	}
 	return "p"
-}
-
-// determineRetprobeBit reads a Performance Monitoring Unit's retprobe bit
-// from /sys/bus/event_source/devices/<pmu>/format/retprobe.
-func determineRetprobeBit(typ probeType) (uint64, error) {
-	p := filepath.Join("/sys/bus/event_source/devices/", typ.String(), "/format/retprobe")
-
-	data, err := os.ReadFile(p)
-	if err != nil {
-		return 0, err
-	}
-
-	var rp uint64
-	n, err := fmt.Sscanf(string(bytes.TrimSpace(data)), "config:%d", &rp)
-	if err != nil {
-		return 0, fmt.Errorf("parse retprobe bit: %w", err)
-	}
-	if n != 1 {
-		return 0, fmt.Errorf("parse retprobe bit: expected 1 item, got %d", n)
-	}
-
-	return rp, nil
-}
-
-func kretprobeBit() (uint64, error) {
-	kprobeRetprobeBit.once.Do(func() {
-		kprobeRetprobeBit.value, kprobeRetprobeBit.err = determineRetprobeBit(kprobeType)
-	})
-	return kprobeRetprobeBit.value, kprobeRetprobeBit.err
 }
 
 // kprobeToken creates the SYM[+offs] token for the tracefs api.
