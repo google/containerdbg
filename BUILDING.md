@@ -119,6 +119,9 @@ types available in compiled kernel depends on configuration used to compile
 it. To generate present vmlinux.h header, default configuration was used, with
 only extra `CONFIG_DEBUG_INFO_BTF=y` option enabled.
 
+The command used for generating the header was:
+bpftool btf dump file /sys/kernel/btf/vmlinux format c > pkg/ebpf/headers/vmlinux_612.h
+
 Given different kernel version can have incompatible type definitions, it
 might be important to use vmlinux.h of a specific kernel version as a "base"
 version of header. To that extent, all vmlinux.h headers are versioned by

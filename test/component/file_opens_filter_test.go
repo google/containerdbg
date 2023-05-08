@@ -23,14 +23,14 @@ import (
 	"time"
 
 	"github.com/go-logr/logr/testr"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"sigs.k8s.io/e2e-framework/pkg/features"
 	"github.com/google/containerdbg/pkg/ebpf"
 	"github.com/google/containerdbg/pkg/events/api"
 	"github.com/google/containerdbg/pkg/linux"
 	pb "github.com/google/containerdbg/proto"
 	"github.com/google/containerdbg/test/support"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
+	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
 func runBinaryWithNewNSAndAttach(t *testing.T, path string, args []string, exitChan chan<- interface{}) {
@@ -85,6 +85,7 @@ func helperWaitForEvent(t *testing.T, events <-chan *pb.Event, expectedEvent *pb
 				return count
 			}
 			event.Timestamp = timestamppb.New(time.Unix(0, 0))
+			// t.Logf("got event: %s", prototext.Format(event))
 			if support.EqualProto(t, event, expectedEvent) {
 				count++
 				if count >= times {

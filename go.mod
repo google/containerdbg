@@ -4,16 +4,16 @@ go 1.18
 
 require (
 	github.com/GoogleContainerTools/kpt v1.0.0-beta.14
-	github.com/cilium/ebpf v0.9.0
+	github.com/cilium/ebpf v0.10.0
 	github.com/go-logr/logr v1.2.3
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.11.0
 	github.com/miekg/dns v1.1.50
 	github.com/spf13/cobra v1.5.0
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
+	golang.org/x/sys v0.2.0
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

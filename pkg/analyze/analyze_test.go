@@ -224,6 +224,7 @@ func TestAnalyze(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			// empty change
 			summary, err := Analyze(tc.dataFile, nil)
 			if err != nil {
 				t.Fatal(err)
