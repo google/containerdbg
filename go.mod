@@ -6,7 +6,6 @@ require (
 	github.com/GoogleContainerTools/kpt v1.0.0-beta.14
 	github.com/cilium/ebpf v0.10.0
 	github.com/go-logr/logr v1.2.3
-	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.11.0
 	github.com/miekg/dns v1.1.50
@@ -40,7 +39,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v20.10.17+incompatible // indirect
-	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -53,6 +52,7 @@ require (
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
