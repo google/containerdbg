@@ -21,12 +21,12 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/miekg/dns"
 	"github.com/google/containerdbg/proto"
+	"github.com/miekg/dns"
 )
 
 const ResolveConfPath = "/etc/resolv.conf"
-const nameserverRegexp = "\\nnameserver\\s+.*\\n"
+const nameserverRegexp = "nameserver\\s+.*\\n"
 
 var nameserverRedirect = fmt.Sprintf("\nnameserver 127.0.0.1\n%s\n", ContainerdbgComment)
 
