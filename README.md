@@ -35,10 +35,10 @@ Currently the tool looks for the following common issues:
 
 Download the pre-compiled binaries:
 
-* [Linux (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_linux_amd64.tar.gz)
-* [Linux (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_linux_arm64.tar.gz)
-* [MacOS (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_darwin_amd64.tar.gz)
-* [MacOS (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.8/containerdbg_0.0.8_darwin_arm64.tar.gz)
+* [Linux (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.9/containerdbg_0.0.9_linux_amd64.tar.gz)
+* [Linux (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.9/containerdbg_0.0.9_linux_arm64.tar.gz)
+* [MacOS (amd64)](https://github.com/google/containerdbg/releases/download/v0.0.9/containerdbg_0.0.9_darwin_amd64.tar.gz)
+* [MacOS (arm64)](https://github.com/google/containerdbg/releases/download/v0.0.9/containerdbg_0.0.9_darwin_arm64.tar.gz)
 
 ```bash
 VERSION=0.0.8
