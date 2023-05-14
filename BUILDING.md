@@ -25,8 +25,9 @@ The following libraries are required in order to succefully compile:
    1. can be installed using `go install github.com/google/ko@latest` (make sure `$HOME/go/bin` is in your `PATH`)
 
 1. kpt
-   1. `wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.23/kpt_linux_amd64`
-   1. `sudo cp kpt_linux_amd64 /usr/local/bin/`
+   1. `wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.23/kpt_linux_amd64 -O kpt`
+   1. `chmod +x kpt`
+   1. `sudo cp kpt /usr/local/bin/`
 
 1. If compiling for local use, Docker is required
    1. https://docs.docker.com/engine/install/ubuntu/
