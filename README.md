@@ -1,5 +1,9 @@
-containerdbg: Automate container debugging tasks
+[ARCHIVED] containerdbg: Automate container debugging tasks
 ============
+
+**Deprecation Notice**
+
+> This project has been archived and is no longer under active maintenance. It constitutes a historical record of the codebase as it existed on My 13, 2025. While the project remains accessible for reference, further contributions and ongoing support will not be provided.
 
 containerdbg is an all-in-one command-line tool to help debug Kubernetes
 containers with common issues that arise when moving to containers as part of
@@ -10,9 +14,9 @@ Currently the tool looks for the following common issues:
 * Files missing in the container image - by tracking failed open-file requests
   the tool can find files that weren't added to the container image (either at
   build-time or via mount). There is also special logic to specifically handle
-  missing library support files (`*.so`, `*.py`, `*.rb`) 
+  missing library support files (`*.so`, `*.py`, `*.rb`)
 
-* `EX_DEV` move failures - many legacy applications rely on a `move` or `rename` operation to be atomic - 
+* `EX_DEV` move failures - many legacy applications rely on a `move` or `rename` operation to be atomic -
    but when moving files that were originally part of the base image - the
    overlay filesystem that supports containers needs to perform a copy and
    delete operation - this can cause strange hard to debug errors
